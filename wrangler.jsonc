@@ -11,7 +11,7 @@
     "crons": ["0 3 * * *"]
   },
   "vars": {
-    "DAWNLY_PUBLIC_URL": "https://replace-with-dawnly-domain.example"
+    "DAWNLY_PUBLIC_URL": "https://dawnly-delta.vercel.app"
   },
   "secrets": {
     "required": ["DAWNLY_CRON_SECRET"]
@@ -35,7 +35,7 @@
         "crons": ["0 3 * * *"]
       },
       "vars": {
-        "DAWNLY_PUBLIC_URL": "https://replace-with-dawnly-domain.example"
+        "DAWNLY_PUBLIC_URL": "https://dawnly-delta.vercel.app"
       },
       "secrets": {
         "required": ["DAWNLY_CRON_SECRET"]

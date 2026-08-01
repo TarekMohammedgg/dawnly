@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import handler from './supabase'
+import handler from './supabase.js'
 
 const ENVIRONMENT_KEYS = [
   'SUPABASE_URL',
@@ -97,7 +97,10 @@ describe('Supabase health endpoint', () => {
 
     expect(recorder.read()).toEqual({ status: 200, body: { healthy: true } })
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ]
     expect(url).toContain('/rest/v1/transactions')
     expect(init.method).toBe('HEAD')
     expect(JSON.stringify(recorder.read().body)).not.toContain('transactions')

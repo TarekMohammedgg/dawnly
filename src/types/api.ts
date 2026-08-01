@@ -4,7 +4,7 @@ import {
   NOTES_MAX_LENGTH,
   transactionDirectionSchema,
   transactionSchema,
-} from './transaction.ts'
+} from './transaction.js'
 
 const optionalNotesInputSchema = z
   .union([z.string().max(NOTES_MAX_LENGTH), z.null()])
