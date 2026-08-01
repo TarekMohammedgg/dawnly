@@ -108,7 +108,7 @@ function toCreatePayload(input: TransactionCreateInput): LocalCreatePayload {
     amount: input.amount,
     notes: input.notes ?? null,
     transaction_date: input.transaction_date,
-    currency: input.currency,
+    currency: input.currency ?? 'EGP',
   }
 }
 

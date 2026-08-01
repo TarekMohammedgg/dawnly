@@ -43,7 +43,7 @@ export const transactionCreateSchema = z.object({
   client_mutation_id: z.string().uuid().optional(),
 })
 
-export type TransactionCreateInput = z.infer<typeof transactionCreateSchema>
+export type TransactionCreateInput = z.input<typeof transactionCreateSchema>
 
 export const transactionUpdateSchema = z
   .object({
@@ -66,7 +66,7 @@ export const transactionUpdateSchema = z
     { message: 'At least one field is required' },
   )
 
-export type TransactionUpdateInput = z.infer<typeof transactionUpdateSchema>
+export type TransactionUpdateInput = z.input<typeof transactionUpdateSchema>
 
 export const transactionDeleteSchema = z.object({
   client_mutation_id: z.string().uuid().optional(),

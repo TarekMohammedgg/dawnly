@@ -133,7 +133,7 @@ describe('HoldToRecordButton', () => {
     const user = userEvent.setup()
     const cancel = vi.fn()
     const onTranscript = vi.fn()
-    let resolveStop: ((value: TranscriptionResult) => void) | null = null
+    let resolveStop: (transcription: TranscriptionResult) => void = () => undefined
 
     renderVoice(
       <HoldToRecordButton
@@ -158,7 +158,7 @@ describe('HoldToRecordButton', () => {
     await user.keyboard('{Escape}')
     expect(cancel).toHaveBeenCalled()
     expect(onTranscript).not.toHaveBeenCalled()
-    resolveStop?.({ transcript: 'should-not-fire', confidence: null })
+    resolveStop({ transcript: 'should-not-fire', confidence: null })
   })
 })
 
