@@ -4,6 +4,7 @@ import {
   queueCreateTransaction,
   queueDeleteTransaction,
   queueUpdateTransaction,
+  markLocalTransactionSynced,
   readCachedTransactions,
 } from './transactions'
 import { requestSync } from '../sync/syncWorker'
@@ -66,6 +67,15 @@ describe('Phase 4 local-first persistence', () => {
         lastError: null,
       },
     ])
+    const storedTransaction = await dawnlyDb.transactions.get(localCreateInput.id)
+    const storedMutation = await dawnlyDb.pendingMutations.get(
+      queued.mutation.clientMutationId,
+    )
+    expect(storedTransaction).not.toHaveProperty('name')
+    expect(storedTransaction).not.toHaveProperty('amount')
+    expect(storedTransaction?.encryptedPayload).toMatch(/^v1\./)
+    expect(storedMutation).not.toHaveProperty('payload')
+    expect(storedMutation?.encryptedPayload).toMatch(/^v1\./)
   })
 
   it('keeps the optimistic change queued when the network is unavailable', async () => {
@@ -84,10 +94,7 @@ describe('Phase 4 local-first persistence', () => {
 
   it('keeps an optimistic edit queued when the network is unavailable', async () => {
     const existing = sampleTransactions[0]!
-    await dawnlyDb.transactions.put({
-      ...existing,
-      syncState: 'synced',
-    })
+    await markLocalTransactionSynced(existing)
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')))
 
     const queued = await queueUpdateTransaction(existing.id, { amount: 999 })
@@ -150,10 +157,7 @@ describe('Phase 4 local-first persistence', () => {
 
   it('replaces a conflicted optimistic update with the server version', async () => {
     const existing = sampleTransactions[0]!
-    await dawnlyDb.transactions.put({
-      ...existing,
-      syncState: 'synced',
-    })
+    await markLocalTransactionSynced(existing)
     const queued = await queueUpdateTransaction(existing.id, { amount: 999 })
     const serverVersion = { ...existing, amount: 300, updatedAt: '2026-08-01T12:00:00.000Z' }
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
@@ -176,10 +180,7 @@ describe('Phase 4 local-first persistence', () => {
 
   it('keeps an offline delete through a database reopen and replays it once', async () => {
     const existing = sampleTransactions[1]!
-    await dawnlyDb.transactions.put({
-      ...existing,
-      syncState: 'synced',
-    })
+    await markLocalTransactionSynced(existing)
     const mutation = await queueDeleteTransaction(existing.id)
     let networkAvailable = false
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {

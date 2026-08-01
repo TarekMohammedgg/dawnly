@@ -1,9 +1,56 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { PinAttemptState } from './pinLockout.js'
+import { z } from 'zod'
+import {
+  evaluateLockout,
+  nextStateAfterFailure,
+  resetPinAttemptState,
+  type LockoutDecision,
+  type PinAttemptState,
+} from './pinLockout.js'
+
+const validTimestampSchema = z.string().refine(
+  (timestamp) => !Number.isNaN(Date.parse(timestamp)),
+  'PIN lockout timestamp must be parseable',
+)
 
 export type PinAttemptStore = {
   read(): Promise<PinAttemptState>
-  write(state: PinAttemptState): Promise<void>
+  recordAttempt(accepted: boolean, now: Date): Promise<PinAttemptDecision>
+}
+
+export const pinAttemptDecisionSchema = z.discriminatedUnion('status', [
+  z.object({ status: z.literal('accepted') }),
+  z.object({ status: z.literal('invalid') }),
+  z.object({
+    status: z.literal('locked'),
+    locked_until: validTimestampSchema,
+    retry_after_seconds: z.number().int().positive(),
+  }),
+])
+
+export type PinAttemptDecision = z.infer<typeof pinAttemptDecisionSchema>
+
+function toLockedDecision(
+  lockout: Extract<LockoutDecision, { status: 'locked' }>,
+): PinAttemptDecision {
+  return {
+    status: 'locked',
+    locked_until: lockout.lockedUntil,
+    retry_after_seconds: lockout.retryAfterSeconds,
+  }
+}
+
+function recordMemoryFailure(
+  state: PinAttemptState,
+  now: Date,
+): { state: PinAttemptState; decision: PinAttemptDecision } {
+  const nextState = nextStateAfterFailure(state, now)
+  const lockout = evaluateLockout(nextState, now)
+  const decision =
+    lockout.status === 'locked'
+      ? toLockedDecision(lockout)
+      : { status: 'invalid' as const }
+  return { state: nextState, decision }
 }
 
 type PinAttemptRow = {
@@ -37,17 +84,17 @@ export function createSupabasePinAttemptStore(
       }
     },
 
-    async write(state) {
-      const { error } = await client.from('pin_attempt_state').upsert({
-        id: 'default',
-        failed_attempts: state.failedAttempts,
-        locked_until: state.lockedUntil,
-        updated_at: new Date().toISOString(),
+    async recordAttempt(accepted, now) {
+      const { data, error } = await client.rpc('dawnly_record_pin_attempt', {
+        p_pin_accepted: accepted,
+        p_attempt_at: now.toISOString(),
       })
 
       if (error) {
-        throw new Error(`Failed to write PIN lockout state: ${error.message}`)
+        throw new Error(`Failed to record PIN attempt: ${error.message}`)
       }
+
+      return pinAttemptDecisionSchema.parse(data)
     },
   }
 }
@@ -64,8 +111,20 @@ export function createMemoryPinAttemptStore(
     async read() {
       return { ...state }
     },
-    async write(next) {
-      state = { ...next }
+    async recordAttempt(accepted, now) {
+      const lockout = evaluateLockout(state, now)
+      if (lockout.status === 'locked') {
+        return toLockedDecision(lockout)
+      }
+
+      if (accepted) {
+        state = resetPinAttemptState()
+        return { status: 'accepted' }
+      }
+
+      const failure = recordMemoryFailure(state, now)
+      state = failure.state
+      return failure.decision
     },
   }
 }

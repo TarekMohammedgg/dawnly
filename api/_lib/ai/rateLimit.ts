@@ -1,38 +1,30 @@
-import {
-  AI_EXTRACT_RATE_LIMIT,
-  AI_EXTRACT_RATE_WINDOW_MS,
-} from './aiConfig.js'
+import { createHash } from 'node:crypto'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { z } from 'zod'
 
-type RateBucket = {
-  count: number
-  windowStart: number
-}
+const aiRateLimitDecisionSchema = z.object({
+  allowed: z.boolean(),
+  retry_after_seconds: z.number().int().nonnegative(),
+})
 
-const buckets = new Map<string, RateBucket>()
+export type AiRateLimitDecision = z.infer<typeof aiRateLimitDecisionSchema>
 
-/**
- * Sliding-window rate limit keyed by opaque session token (or other id).
- * Returns true when the request is allowed.
- */
-export function allowAiExtractRequest(
-  key: string,
-  nowMs = Date.now(),
-): boolean {
-  const existing = buckets.get(key)
-  if (!existing || nowMs - existing.windowStart >= AI_EXTRACT_RATE_WINDOW_MS) {
-    buckets.set(key, { count: 1, windowStart: nowMs })
-    return true
+export async function allowAiExtractRequest(
+  client: SupabaseClient,
+  sessionToken: string,
+  now = new Date(),
+): Promise<AiRateLimitDecision> {
+  const sessionTokenHash = createHash('sha256')
+    .update(sessionToken, 'utf8')
+    .digest('hex')
+  const { data, error } = await client.rpc('dawnly_allow_ai_extract', {
+    p_key_hash: sessionTokenHash,
+    p_request_at: now.toISOString(),
+  })
+
+  if (error) {
+    throw new Error(`Failed to record AI extraction request: ${error.message}`)
   }
 
-  if (existing.count >= AI_EXTRACT_RATE_LIMIT) {
-    return false
-  }
-
-  existing.count += 1
-  return true
-}
-
-/** Test helper — clears in-memory buckets. */
-export function resetAiExtractRateLimit(): void {
-  buckets.clear()
+  return aiRateLimitDecisionSchema.parse(data)
 }

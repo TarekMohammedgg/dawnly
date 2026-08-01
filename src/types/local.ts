@@ -62,6 +62,24 @@ export const pendingMutationSchema = z.discriminatedUnion('operation', [
 
 export type PendingMutation = z.infer<typeof pendingMutationSchema>
 
+export type StoredLocalTransaction = {
+  id: string
+  encryptedPayload: string
+  updatedAt: string
+  syncState: LocalTransaction['syncState']
+}
+
+export type StoredPendingMutation = {
+  clientMutationId: string
+  transactionId: string
+  operation: PendingMutation['operation']
+  attemptCount: number
+  createdAt: string
+  updatedAt: string
+  lastError: string | null
+  encryptedPayload: string
+}
+
 export type LocalMetadata = {
   key: string
   value: string

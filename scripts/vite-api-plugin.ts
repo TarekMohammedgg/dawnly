@@ -2,12 +2,15 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import type { Plugin } from 'vite'
-import type { VercelRequest, VercelResponse } from '@vercel/node'
+import type {
+  DawnlyRequest,
+  DawnlyResponse,
+} from '../api/_lib/platformTypes.ts'
 import { errorType, logServerFailure } from '../api/_lib/observability.ts'
 
 type ApiHandler = (
-  request: VercelRequest,
-  response: VercelResponse,
+  request: DawnlyRequest,
+  response: DawnlyResponse,
 ) => unknown | Promise<unknown>
 
 /** Load `.env` files without dotenv-expand so `$` in hashes stays literal. */
@@ -63,7 +66,7 @@ async function readJsonBody(req: IncomingMessage): Promise<unknown> {
   }
 }
 
-function createResponse(res: ServerResponse): VercelResponse {
+function createResponse(res: ServerResponse): DawnlyResponse {
   let statusCode = 200
 
   const response = {
@@ -97,7 +100,7 @@ function createResponse(res: ServerResponse): VercelResponse {
     },
   }
 
-  return response as unknown as VercelResponse
+  return response as unknown as DawnlyResponse
 }
 
 async function resolveHandler(
@@ -189,7 +192,7 @@ export function dawnlyApiPlugin(): Plugin {
               ...resolved.params,
             },
             cookies: {},
-          }) as unknown as VercelRequest
+          }) as unknown as DawnlyRequest
 
           await resolved.handler(request, createResponse(res))
         } catch (cause) {

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { sampleTransactions } from '../../test/fixtures/transactions'
-import { CSV_UTF8_BOM } from './constants'
+import { CSV_MAX_FILE_BYTES, CSV_UTF8_BOM } from './constants'
 import { buildTransactionsCsv } from './exportCsv'
 import { importParsedTransactions } from './importRows'
 import { parseCsvText } from './parseCsvFile'
@@ -41,6 +41,11 @@ describe('parseCsvText', () => {
     }
     expect(result.records).toHaveLength(1)
     expect(result.records[0]?.['الاسم']).toBe('أحمد')
+  })
+
+  it('rejects CSV text over the file-size limit before parsing', () => {
+    const result = parseCsvText('x'.repeat(CSV_MAX_FILE_BYTES + 1))
+    expect(result).toEqual({ ok: false, message: 'ملف CSV كبير جداً' })
   })
 })
 
@@ -218,6 +223,19 @@ describe('exportCsv', () => {
     expect(lines[1]).toBe('أحمد,ليّا,250,28/07/2026,EGP,')
     expect(lines[2]).toBe('سارة,عليّا,100,27/07/2026,EGP,')
     expect(lines[3]).toBe('أحمد,عليّا,50,26/07/2026,EGP,')
+  })
+
+  it('prefixes formula-like names and notes with a tab', () => {
+    const csvText = buildTransactionsCsv([
+      {
+        ...sampleTransactions[0]!,
+        name: '=HYPERLINK("https://example.com")',
+        notes: '@SUM(1,2)',
+      },
+    ])
+
+    expect(csvText).toContain('\t=HYPERLINK')
+    expect(csvText).toContain('\t@SUM')
   })
 })
 

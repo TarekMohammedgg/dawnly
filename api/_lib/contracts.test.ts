@@ -185,4 +185,51 @@ describe('schema migration', () => {
     expect(sql).toContain('ENABLE ROW LEVEL SECURITY')
     expect(sql).toMatch(/server-only idempotency/i)
   })
+
+  it('documents atomic server-only authentication and AI rate limiting', () => {
+    const sql = readFileSync(
+      resolve(
+        process.cwd(),
+        'supabase/migrations/20260801000006_security_hardening.sql',
+      ),
+      'utf8',
+    )
+
+    expect(sql).toContain('dawnly_record_pin_attempt')
+    expect(sql).toContain('FOR UPDATE')
+    expect(sql).toContain("INTERVAL '60 seconds'")
+    expect(sql).toContain('ai_extract_rate_limits')
+    expect(sql).toContain('dawnly_allow_ai_extract')
+    expect(sql).toContain("'^[0-9a-f]{64}$'")
+    expect(sql).toContain('REVOKE ALL ON FUNCTION')
+    expect(sql).toContain('GRANT EXECUTE')
+  })
+})
+
+describe('HTTP security configuration', () => {
+  it('keeps framing, CSP, and API cache protections enabled', () => {
+    const config = JSON.parse(
+      readFileSync(resolve(process.cwd(), 'vercel.json'), 'utf8'),
+    ) as {
+      headers: Array<{
+        source: string
+        headers: Array<{ key: string; value: string }>
+      }>
+    }
+    const pageHeaders = config.headers.find((rule) => rule.source === '/(.*)')
+    const apiHeaders = config.headers.find((rule) => rule.source === '/api/(.*)')
+
+    expect(pageHeaders?.headers).toEqual(
+      expect.arrayContaining([
+        { key: 'X-Frame-Options', value: 'DENY' },
+        expect.objectContaining({ key: 'Content-Security-Policy' }),
+      ]),
+    )
+    expect(apiHeaders?.headers).toEqual(
+      expect.arrayContaining([
+        { key: 'Cache-Control', value: 'no-store, max-age=0' },
+        { key: 'Pragma', value: 'no-cache' },
+      ]),
+    )
+  })
 })

@@ -8,7 +8,3 @@ export const MINIMAX_MODEL = 'MiniMax-M3'
 export const AI_EXTRACT_TIMEOUT_MS = 15_000
 export const AI_EXTRACT_MAX_TOKENS = 200
 export const AI_EXTRACT_TEMPERATURE = 0
-
-/** Max extract requests per session token within the sliding window. */
-export const AI_EXTRACT_RATE_LIMIT = 20
-export const AI_EXTRACT_RATE_WINDOW_MS = 60_000

@@ -1,12 +1,13 @@
 import {
   evaluateLockout,
-  nextStateAfterFailure,
-  resetPinAttemptState,
 } from './pinLockout.js'
 import { isSixDigitPin, verifyPinHash } from './pinHash.js'
 import { createSessionToken } from './sessionToken.js'
 import { verifyPinRequestSchema } from '../../src/types/api.js'
-import type { PinAttemptStore } from './pinAttemptStore.js'
+import type {
+  PinAttemptDecision,
+  PinAttemptStore,
+} from './pinAttemptStore.js'
 import { apiError, json } from './http.js'
 
 export type VerifyPinDeps = {
@@ -31,8 +32,8 @@ export async function handleVerifyPin(
   }
 
   const now = deps.now ?? new Date()
-  const current = await deps.store.read()
-  const lockout = evaluateLockout(current, now)
+  const currentState = await deps.store.read()
+  const lockout = evaluateLockout(currentState, now)
 
   if (lockout.status === 'locked') {
     return {
@@ -51,36 +52,36 @@ export async function handleVerifyPin(
   }
 
   const accepted = verifyPinHash(pin, deps.pinHash)
+  const decision = await deps.store.recordAttempt(accepted, now)
+  if (decision.status === 'locked') {
+    return lockedPinResponse(decision)
+  }
+
   if (!accepted) {
-    const next = nextStateAfterFailure(current, now)
-    await deps.store.write(next)
-
-    if (next.lockedUntil) {
-      const locked = evaluateLockout(next, now)
-      if (locked.status === 'locked') {
-        return {
-          status: 429,
-          body: {
-            error: {
-              code: 'locked',
-              message: 'تم إيقاف المحاولة لمدة دقيقة بعد ٥ محاولات خاطئة',
-              details: {
-                locked_until: locked.lockedUntil,
-                retry_after_seconds: locked.retryAfterSeconds,
-              },
-            },
-          },
-        }
-      }
-    }
-
     return apiError(401, 'invalid_pin', 'الرقم السري غير صحيح')
   }
 
-  await deps.store.write(resetPinAttemptState())
+  if (decision.status !== 'accepted') {
+    throw new Error('PIN store returned an invalid accepted-attempt decision')
+  }
+
   const { token, payload } = createSessionToken(deps.sessionSecret)
   return json(200, {
     token,
     expires_at: new Date(payload.exp * 1000).toISOString(),
   })
+}
+
+function lockedPinResponse(
+  decision: Extract<PinAttemptDecision, { status: 'locked' }>,
+): { status: number; body: unknown } {
+  return apiError(
+    429,
+    'locked',
+    'تم إيقاف المحاولة لمدة دقيقة بعد ٥ محاولات خاطئة',
+    {
+      locked_until: decision.locked_until,
+      retry_after_seconds: decision.retry_after_seconds,
+    },
+  )
 }

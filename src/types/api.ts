@@ -95,6 +95,7 @@ export const apiErrorCodeSchema = z.enum([
   'locked',
   'invalid_pin',
   'rate_limited',
+  'payload_too_large',
   'internal_error',
 ])
 
@@ -153,14 +154,18 @@ export type AiKeyUpdateRequest = z.infer<typeof aiKeyUpdateRequestSchema>
 
 /** Max transcript length accepted by voice field extraction. */
 export const EXTRACT_TRANSCRIPT_MAX_LENGTH = 1000
+/** Max JSON body size accepted by voice field extraction. */
+export const EXTRACT_REQUEST_MAX_BYTES = 16 * 1024
 
-export const extractTransactionRequestSchema = z.object({
-  transcript: z
-    .string()
-    .trim()
-    .min(1, 'أدخل نص التسجيل')
-    .max(EXTRACT_TRANSCRIPT_MAX_LENGTH, 'نص التسجيل طويل جداً'),
-})
+export const extractTransactionRequestSchema = z
+  .object({
+    transcript: z
+      .string()
+      .trim()
+      .min(1, 'أدخل نص التسجيل')
+      .max(EXTRACT_TRANSCRIPT_MAX_LENGTH, 'نص التسجيل طويل جداً'),
+  })
+  .strict()
 
 export type ExtractTransactionRequest = z.infer<
   typeof extractTransactionRequestSchema

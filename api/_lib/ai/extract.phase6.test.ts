@@ -1,19 +1,20 @@
 /** @vitest-environment node */
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { createHash } from 'node:crypto'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { describe, expect, it, vi } from 'vitest'
 import {
+  EXTRACT_REQUEST_MAX_BYTES,
   EXTRACT_TRANSCRIPT_MAX_LENGTH,
   extractTransactionDraftSchema,
   extractTransactionRequestSchema,
   extractTransactionResponseSchema,
 } from '../../../src/types/api'
-import { OPENROUTER_MODEL, MINIMAX_MODEL, AI_EXTRACT_RATE_LIMIT } from './aiConfig'
+import { isJsonRequestTooLarge } from '../http'
+import { OPENROUTER_MODEL, MINIMAX_MODEL } from './aiConfig'
 import { extractWithMiniMax } from './miniMaxExtract'
 import { extractWithOpenRouter } from './openRouterExtract'
 import { parseExtractionContent } from './parseExtraction'
-import {
-  allowAiExtractRequest,
-  resetAiExtractRateLimit,
-} from './rateLimit'
+import { allowAiExtractRequest } from './rateLimit'
 
 describe('parseExtractionContent', () => {
   it('parses JSON and forces EGP currency', () => {
@@ -89,6 +90,22 @@ describe('extract request/response contracts', () => {
       }).draft.name,
     ).toBe('أحمد')
   })
+
+  it('rejects unexpected fields and oversized JSON bodies', () => {
+    expect(
+      extractTransactionRequestSchema.safeParse({
+        transcript: 'أحمد',
+        unexpected: 'ignored',
+      }).success,
+    ).toBe(false)
+    expect(
+      isJsonRequestTooLarge(
+        { transcript: 'x'.repeat(EXTRACT_REQUEST_MAX_BYTES) },
+        undefined,
+        EXTRACT_REQUEST_MAX_BYTES,
+      ),
+    ).toBe(true)
+  })
 })
 
 describe('provider adapters', () => {
@@ -153,16 +170,37 @@ describe('provider adapters', () => {
 })
 
 describe('AI extract rate limit', () => {
-  beforeEach(() => {
-    resetAiExtractRateLimit()
+  it('hashes the session token before asking the server to allow a request', async () => {
+    const rpc = vi.fn(async () => ({
+      data: { allowed: true, retry_after_seconds: 0 },
+      error: null,
+    }))
+    const sessionToken = 'session-a'
+    const client = { rpc } as unknown as SupabaseClient
+
+    const decision = await allowAiExtractRequest(
+      client,
+      sessionToken,
+      new Date('2026-08-01T12:00:00.000Z'),
+    )
+
+    expect(decision).toEqual({ allowed: true, retry_after_seconds: 0 })
+    expect(rpc).toHaveBeenCalledWith('dawnly_allow_ai_extract', {
+      p_key_hash: createHash('sha256').update(sessionToken).digest('hex'),
+      p_request_at: '2026-08-01T12:00:00.000Z',
+    })
+    expect(JSON.stringify(rpc.mock.calls[0])).not.toContain(sessionToken)
   })
 
-  it('allows up to the configured limit then blocks', () => {
-    const key = 'session-a'
-    for (let i = 0; i < AI_EXTRACT_RATE_LIMIT; i += 1) {
-      expect(allowAiExtractRequest(key, 1_000)).toBe(true)
-    }
-    expect(allowAiExtractRequest(key, 1_000)).toBe(false)
-    expect(allowAiExtractRequest(key, 1_000 + 60_000)).toBe(true)
+  it('returns the server retry interval when the session is throttled', async () => {
+    const rpc = vi.fn(async () => ({
+      data: { allowed: false, retry_after_seconds: 37 },
+      error: null,
+    }))
+    const client = { rpc } as unknown as SupabaseClient
+
+    await expect(
+      allowAiExtractRequest(client, 'session-a'),
+    ).resolves.toEqual({ allowed: false, retry_after_seconds: 37 })
   })
 })

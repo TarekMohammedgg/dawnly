@@ -17,16 +17,20 @@ function sortNewestFirst(
   return dateOrder || second.createdAt.localeCompare(first.createdAt)
 }
 
+function escapeSpreadsheetFormula(value: string): string {
+  return /^[=+\-@]/.test(value) ? `\t${value}` : value
+}
+
 /** Builds a UTF-8 BOM CSV string with Arabic headers, newest-first rows. */
 export function buildTransactionsCsv(transactions: Transaction[]): string {
   const ordered = [...transactions].sort(sortNewestFirst)
   const data = ordered.map((transaction) => ({
-    [CSV_HEADERS.name]: transaction.name,
+    [CSV_HEADERS.name]: escapeSpreadsheetFormula(transaction.name),
     [CSV_HEADERS.direction]: directionToLabel(transaction.direction),
     [CSV_HEADERS.amount]: String(transaction.amount),
     [CSV_HEADERS.date]: formatDisplayDate(transaction.transactionDate),
     [CSV_HEADERS.currency]: 'EGP',
-    [CSV_HEADERS.notes]: transaction.notes ?? '',
+    [CSV_HEADERS.notes]: escapeSpreadsheetFormula(transaction.notes ?? ''),
   }))
 
   const body = Papa.unparse(

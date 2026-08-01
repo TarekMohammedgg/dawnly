@@ -1,12 +1,18 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
+import type { DawnlyRequest, DawnlyResponse } from '../_lib/platformTypes.js'
 import {
   extractTransactionRequestSchema,
+  EXTRACT_REQUEST_MAX_BYTES,
   type ExtractTransactionResponse,
 } from '../../src/types/api.js'
 import { extractTransactionDraft } from '../_lib/ai/extractTransaction.js'
 import { allowAiExtractRequest } from '../_lib/ai/rateLimit.js'
 import { readServerEnv } from '../_lib/env.js'
-import { apiError, readBearerToken } from '../_lib/http.js'
+import {
+  apiError,
+  isJsonRequestTooLarge,
+  readBearerToken,
+  setNoStore,
+} from '../_lib/http.js'
 import { errorType, logServerFailure } from '../_lib/observability.js'
 import { resolveAiApiKey } from '../_lib/openRouterSecret.js'
 import { requireDawnlySession } from '../_lib/requireSession.js'
@@ -19,9 +25,11 @@ function isAbortError(cause: unknown): boolean {
 }
 
 export default async function handler(
-  request: VercelRequest,
-  response: VercelResponse,
+  request: DawnlyRequest,
+  response: DawnlyResponse,
 ) {
+  setNoStore(response)
+
   if (request.method !== 'POST') {
     response.setHeader('Allow', 'POST')
     return response.status(405).json({
@@ -32,6 +40,25 @@ export default async function handler(
     })
   }
 
+  const declaredLength = request.headers['content-length']
+  const contentLength = Array.isArray(declaredLength)
+    ? declaredLength[0]
+    : declaredLength
+  if (
+    isJsonRequestTooLarge(
+      request.body,
+      contentLength,
+      EXTRACT_REQUEST_MAX_BYTES,
+    )
+  ) {
+    const failure = apiError(
+      413,
+      'payload_too_large',
+      'طلب التحليل كبير جداً',
+    )
+    return response.status(failure.status).json(failure.body)
+  }
+
   try {
     const env = readServerEnv()
     const auth = requireDawnlySession(request.headers.authorization, env)
@@ -39,8 +66,25 @@ export default async function handler(
       return response.status(auth.response.status).json(auth.response.body)
     }
 
-    const rateKey = readBearerToken(request.headers.authorization) ?? 'anonymous'
-    if (!allowAiExtractRequest(rateKey)) {
+    const rateKey = readBearerToken(request.headers.authorization)
+    if (!rateKey) {
+      const failure = apiError(
+        401,
+        'unauthorized',
+        'يلزم تسجيل الدخول بالرقم السري',
+      )
+      return response.status(failure.status).json(failure.body)
+    }
+
+    const rateDecision = await allowAiExtractRequest(
+      auth.value.supabase,
+      rateKey,
+    )
+    if (!rateDecision.allowed) {
+      response.setHeader(
+        'Retry-After',
+        String(rateDecision.retry_after_seconds),
+      )
       const failure = apiError(
         429,
         'rate_limited',

@@ -2,16 +2,17 @@ import Dexie, { type Table } from 'dexie'
 import type {
   LocalMetadata,
   LocalTransaction,
-  PendingMutation,
+  StoredLocalTransaction,
+  StoredPendingMutation,
 } from '../../types/local'
 
 export const LOCAL_DATABASE_NAME = 'dawnly-local'
-/** v2: optional notes on LocalTransaction; amount may be zero. */
-export const LOCAL_SCHEMA_VERSION = 2
+/** v3: sensitive transaction and mutation payloads are encrypted. */
+export const LOCAL_SCHEMA_VERSION = 3
 
 export class DawnlyDatabase extends Dexie {
-  declare transactions: Table<LocalTransaction, string>
-  declare pendingMutations: Table<PendingMutation, string>
+  declare transactions: Table<StoredLocalTransaction, string>
+  declare pendingMutations: Table<StoredPendingMutation, string>
   declare metadata: Table<LocalMetadata, string>
 
   constructor() {
@@ -22,7 +23,7 @@ export class DawnlyDatabase extends Dexie {
       metadata: 'key',
     })
 
-    this.version(LOCAL_SCHEMA_VERSION)
+    this.version(2)
       .stores({
         transactions: 'id, transactionDate, updatedAt, syncState',
         pendingMutations: 'clientMutationId, createdAt, transactionId',
@@ -37,6 +38,20 @@ export class DawnlyDatabase extends Dexie {
             await migrationTransaction.table('transactions').put(next)
           }
         }
+        await migrationTransaction.table('metadata').put({
+          key: 'schemaVersion',
+          value: '2',
+          updatedAt: new Date().toISOString(),
+        })
+      })
+
+    this.version(LOCAL_SCHEMA_VERSION)
+      .stores({
+        transactions: 'id, updatedAt, syncState',
+        pendingMutations: 'clientMutationId, createdAt, transactionId, operation',
+        metadata: 'key',
+      })
+      .upgrade(async (migrationTransaction) => {
         await migrationTransaction.table('metadata').put({
           key: 'schemaVersion',
           value: String(LOCAL_SCHEMA_VERSION),

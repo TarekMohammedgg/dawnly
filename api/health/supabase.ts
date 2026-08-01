@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
+import type { DawnlyRequest, DawnlyResponse } from '../_lib/platformTypes.js'
 import { createSecretClient, readServerEnv } from '../_lib/env.js'
 import {
   CRON_SECRET_HEADER,
@@ -6,9 +6,10 @@ import {
   readCronSecret,
 } from '../_lib/cronAuth.js'
 import { errorType, logServerFailure } from '../_lib/observability.js'
+import { setNoStore } from '../_lib/http.js'
 
 function readHeader(
-  request: VercelRequest,
+  request: DawnlyRequest,
   name: string,
 ): string | undefined {
   const headerValue = request.headers[name]
@@ -28,9 +29,11 @@ async function readSupabaseHealth(): Promise<void> {
 }
 
 export default async function handler(
-  request: VercelRequest,
-  response: VercelResponse,
+  request: DawnlyRequest,
+  response: DawnlyResponse,
 ) {
+  setNoStore(response)
+
   if (request.method !== 'GET') {
     response.setHeader('Allow', 'GET')
     return response.status(405).json({

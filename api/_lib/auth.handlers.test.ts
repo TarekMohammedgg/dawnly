@@ -64,6 +64,22 @@ describe('verify-pin handler', () => {
     expect(stillLocked.status).toBe(429)
   })
 
+  it('keeps the lockout threshold correct when failures arrive together', async () => {
+    const store = createMemoryPinAttemptStore()
+    const now = new Date('2026-08-01T12:00:00.000Z')
+    const results = await Promise.all(
+      Array.from({ length: 10 }, () =>
+        handleVerifyPin(
+          { pin: '000000' },
+          { pinHash, sessionSecret, store, now },
+        ),
+      ),
+    )
+
+    expect(results.filter((result) => result.status === 401)).toHaveLength(4)
+    expect(results.filter((result) => result.status === 429)).toHaveLength(6)
+  })
+
   it('rejects non-six-digit PIN bodies', async () => {
     const store = createMemoryPinAttemptStore()
     const result = await handleVerifyPin(

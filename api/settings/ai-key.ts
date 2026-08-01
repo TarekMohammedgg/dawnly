@@ -1,7 +1,7 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
+import type { DawnlyRequest, DawnlyResponse } from '../_lib/platformTypes.js'
 import { aiKeyUpdateRequestSchema } from '../../src/types/api.js'
 import { readServerEnv } from '../_lib/env.js'
-import { apiError } from '../_lib/http.js'
+import { apiError, setNoStore } from '../_lib/http.js'
 import { errorType, logServerFailure } from '../_lib/observability.js'
 import {
   readAiKeyStatus,
@@ -11,9 +11,11 @@ import {
 import { requireDawnlySession } from '../_lib/requireSession.js'
 
 export default async function handler(
-  request: VercelRequest,
-  response: VercelResponse,
+  request: DawnlyRequest,
+  response: DawnlyResponse,
 ) {
+  setNoStore(response)
+
   if (request.method !== 'GET' && request.method !== 'PUT') {
     response.setHeader('Allow', 'GET, PUT')
     return response.status(405).json({

@@ -27,3 +27,5 @@ export const CSV_EXPORT_HEADERS = [
 export const CSV_UTF8_BOM = '\uFEFF'
 
 export const CSV_SEPARATOR = ','
+
+export const CSV_MAX_FILE_BYTES = 5 * 1024 * 1024

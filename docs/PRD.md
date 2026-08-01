@@ -136,8 +136,8 @@ The application is designed to be calm and easy for the project owner's mother: 
   stored encrypted in Supabase Vault and are never shown again after save; only
   a configured / not-configured status is displayed per provider.
 - CSV backup export.
-- Sign out, which clears the in-memory PIN session and returns the user to the
-  lock screen.
+- Sign out, which clears the in-memory authenticated session and local-cache
+  encryption key before returning the user to the lock screen.
 - No user-facing control to delete all data or change/recover the PIN.
 
 ### Design principles
@@ -164,6 +164,11 @@ The application is designed to be calm and easy for the project owner's mother: 
   back to `OPENROUTER_API_KEY` or `MINIMAX_API_KEY` in Vercel env if the matching
   Vault secret is empty.
 - PIN verification, protected writes, and AI services run through a Vercel server-side API.
+- IndexedDB transaction and pending-mutation payloads are encrypted with
+  AES-GCM. The key is derived from the entered PIN after server verification
+  and exists only in memory; it is cleared on sign out or session expiry. The app
+  remains usable offline while unlocked, but a closed or locked app cannot
+  decrypt the local cache until the PIN creates a new session.
 - Supabase Row Level Security (RLS) must restrict transaction tables. Transaction data must not be publicly readable or writable with a publishable/anonymous key.
 - Public client configuration may use the project URL and publishable key (`sb_publishable_…`). The secret key (`sb_secret_…`, or legacy service-role) stays server-only.
 - The installable app uses an Arabic RTL standalone PWA shell. Its service
@@ -183,7 +188,7 @@ The application is designed to be calm and easy for the project owner's mother: 
 | Frontend | React `19.2.8`, React DOM `19.2.8`, TypeScript `6.0.3`, MUI `9.2.0`, Vite `8.2.0`, `@vitejs/plugin-react` `6.0.5`, and `vite-plugin-pwa` `1.3.0`; RTL and PWA. |
 | Hosting and API | Vercel for frontend hosting and Serverless Functions. |
 | Database | Supabase PostgreSQL through `@supabase/supabase-js` `2.111.0`. |
-| Local storage | IndexedDB through Dexie `4.4.4` for an offline-readable copy and queued unsynced operations. The database has `transactions`, `pendingMutations`, and `metadata` tables. |
+| Local storage | IndexedDB through Dexie `4.4.4` for encrypted transaction payloads and queued unsynced operations. The database has `transactions`, `pendingMutations`, and `metadata` tables; sensitive payloads are AES-GCM encrypted with an in-memory key derived from the verified PIN. |
 | Data utilities | Papa Parse `5.5.4` for CSV and Zod `4.4.3` for shared validation. |
 | AI | Browser `SpeechRecognition` (`ar-EG`) for Egyptian-Arabic transcription; OpenRouter (`openai/gpt-5.6-luna`) or MiniMax Token Plan (`MiniMax-M3`), server-side only, for field extraction. |
 | Keep-alive | Cloudflare Cron runs a protected daily read/health request to avoid Supabase Free project inactivity. |
@@ -195,9 +200,11 @@ initial download remains small on mobile connections.
 
 ### Local-first synchronization
 
-- The browser stores one validated local transaction shape and one validated
-  mutation shape. Each queued mutation records its operation, transaction ID,
-  payload, client mutation ID, attempt count, timestamps, and last error.
+- The browser keeps one validated local transaction shape and one validated
+  mutation shape in memory, while IndexedDB stores their sensitive payloads as
+  AES-GCM ciphertext. Each queued mutation records its operation, transaction
+  ID, encrypted payload, client mutation ID, attempt count, timestamps, and
+  last error.
 - Create, edit, and delete actions are written to IndexedDB before any network
   request. A single sequential worker replays the queue after unlock, after a
   local change, and when the browser reports that it is online.

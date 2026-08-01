@@ -1,16 +1,16 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
+import type { DawnlyRequest, DawnlyResponse } from '../_lib/platformTypes.js'
 import {
   transactionCreateSchema,
   transactionListQuerySchema,
 } from '../../src/types/api.js'
 import { readServerEnv } from '../_lib/env.js'
-import { apiError } from '../_lib/http.js'
+import { apiError, setNoStore } from '../_lib/http.js'
 import { errorType, logServerFailure } from '../_lib/observability.js'
 import { requireDawnlySession } from '../_lib/requireSession.js'
 import { createTransaction, listTransactions } from '../_lib/transactions.js'
 
 function readQueryParams(
-  query: VercelRequest['query'],
+  query: DawnlyRequest['query'],
 ): Record<string, string> {
   const result: Record<string, string> = {}
   for (const [key, value] of Object.entries(query)) {
@@ -24,9 +24,11 @@ function readQueryParams(
 }
 
 export default async function handler(
-  request: VercelRequest,
-  response: VercelResponse,
+  request: DawnlyRequest,
+  response: DawnlyResponse,
 ) {
+  setNoStore(response)
+
   if (request.method !== 'GET' && request.method !== 'POST') {
     response.setHeader('Allow', 'GET, POST')
     return response.status(405).json({

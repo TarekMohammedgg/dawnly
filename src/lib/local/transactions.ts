@@ -11,10 +11,16 @@ import {
   type LocalTransaction,
   type LocalUpdatePayload,
   type PendingMutation,
+  type StoredLocalTransaction,
+  type StoredPendingMutation,
 } from '../../types/local'
 import { normalizePersonName, normalizePersonNameKey } from '../transaction/normalizeName'
 import { dawnlyDb } from './database'
+import { decryptLocalJson, encryptLocalJson } from './encryption'
 import { notifyLocalDataChanged } from './status'
+
+type TransactionRecord = StoredLocalTransaction | LocalTransaction
+type MutationRecord = StoredPendingMutation | PendingMutation
 
 function nowIso(): string {
   return new Date().toISOString()
@@ -65,6 +71,64 @@ function toClientTransaction(localTransaction: LocalTransaction): Transaction {
     currency: localTransaction.currency,
     createdAt: localTransaction.createdAt,
     updatedAt: localTransaction.updatedAt,
+  }
+}
+
+function isEncryptedTransaction(
+  record: TransactionRecord,
+): record is StoredLocalTransaction {
+  return 'encryptedPayload' in record
+}
+
+function isEncryptedMutation(record: MutationRecord): record is StoredPendingMutation {
+  return 'encryptedPayload' in record
+}
+
+async function readTransactionRecord(
+  record: TransactionRecord,
+): Promise<LocalTransaction> {
+  if (isEncryptedTransaction(record)) {
+    return localTransactionSchema.parse(
+      await decryptLocalJson<LocalTransaction>(record.encryptedPayload),
+    )
+  }
+  return localTransactionSchema.parse(record)
+}
+
+async function readMutationRecord(
+  record: MutationRecord,
+): Promise<PendingMutation> {
+  if (isEncryptedMutation(record)) {
+    return pendingMutationSchema.parse(
+      await decryptLocalJson<PendingMutation>(record.encryptedPayload),
+    )
+  }
+  return pendingMutationSchema.parse(record)
+}
+
+async function storeTransactionRecord(
+  transaction: LocalTransaction,
+): Promise<StoredLocalTransaction> {
+  return {
+    id: transaction.id,
+    encryptedPayload: await encryptLocalJson(transaction),
+    updatedAt: transaction.updatedAt,
+    syncState: transaction.syncState,
+  }
+}
+
+async function storeMutationRecord(
+  mutation: PendingMutation,
+): Promise<StoredPendingMutation> {
+  return {
+    clientMutationId: mutation.clientMutationId,
+    transactionId: mutation.transactionId,
+    operation: mutation.operation,
+    attemptCount: mutation.attemptCount,
+    createdAt: mutation.createdAt,
+    updatedAt: mutation.updatedAt,
+    lastError: mutation.lastError,
+    encryptedPayload: await encryptLocalJson(mutation),
   }
 }
 
@@ -158,11 +222,78 @@ function applyUpdate(
   )
 }
 
+async function readLocalRecords(): Promise<{
+  transactions: TransactionRecord[]
+  mutations: MutationRecord[]
+}> {
+  const [transactions, mutations] = await Promise.all([
+    dawnlyDb.transactions.toArray(),
+    dawnlyDb.pendingMutations.toArray(),
+  ])
+  return {
+    transactions: transactions as TransactionRecord[],
+    mutations: mutations as MutationRecord[],
+  }
+}
+
+async function encryptLegacyTransactions(
+  records: TransactionRecord[],
+): Promise<StoredLocalTransaction[]> {
+  return Promise.all(
+    records
+      .filter((record) => !isEncryptedTransaction(record))
+      .map(async (record) =>
+        storeTransactionRecord(await readTransactionRecord(record)),
+      ),
+  )
+}
+
+async function encryptLegacyMutations(
+  records: MutationRecord[],
+): Promise<StoredPendingMutation[]> {
+  return Promise.all(
+    records
+      .filter((record) => !isEncryptedMutation(record))
+      .map(async (record) => storeMutationRecord(await readMutationRecord(record))),
+  )
+}
+
+async function writeEncryptedLocalData(
+  transactions: StoredLocalTransaction[],
+  mutations: StoredPendingMutation[],
+): Promise<void> {
+  if (transactions.length === 0 && mutations.length === 0) {
+    return
+  }
+
+  await dawnlyDb.transaction(
+    'rw',
+    dawnlyDb.transactions,
+    dawnlyDb.pendingMutations,
+    async () => {
+      await dawnlyDb.transactions.bulkPut(transactions)
+      await dawnlyDb.pendingMutations.bulkPut(mutations)
+    },
+  )
+}
+
+export async function migrateLegacyLocalData(): Promise<void> {
+  const records = await readLocalRecords()
+  const [encryptedTransactions, encryptedMutations] = await Promise.all([
+    encryptLegacyTransactions(records.transactions),
+    encryptLegacyMutations(records.mutations),
+  ])
+  await writeEncryptedLocalData(encryptedTransactions, encryptedMutations)
+}
+
 export async function readCachedTransactions(
   filters: TransactionListQuery = {},
 ): Promise<Transaction[]> {
   const localRows = await dawnlyDb.transactions.toArray()
-  return localRows
+  const localTransactions = await Promise.all(
+    (localRows as TransactionRecord[]).map(readTransactionRecord),
+  )
+  return localTransactions
     .map(toClientTransaction)
     .filter((transaction) => matchesFilters(transaction, filters))
     .sort(sortNewestFirst)
@@ -176,9 +307,13 @@ export async function cacheServerTransactions(
   const protectedIds = new Set(
     pendingMutations.map((mutation) => mutation.transactionId),
   )
-  const cacheRows = serverRows
-    .filter((transaction) => !protectedIds.has(transaction.id))
-    .map((transaction) => toLocalTransaction(transaction))
+  const cacheRows = await Promise.all(
+    serverRows
+      .filter((transaction) => !protectedIds.has(transaction.id))
+      .map((transaction) =>
+        storeTransactionRecord(toLocalTransaction(transaction)),
+      ),
+  )
 
   await dawnlyDb.transaction('rw', dawnlyDb.transactions, async () => {
     await dawnlyDb.transactions.bulkPut(cacheRows)
@@ -223,14 +358,16 @@ export async function queueCreateTransaction(
     ...createMutationMetadata(transactionId, clientMutationId),
     payload,
   })
+  const storedTransaction = await storeTransactionRecord(transaction)
+  const storedMutation = await storeMutationRecord(mutation)
 
   await dawnlyDb.transaction(
     'rw',
     dawnlyDb.transactions,
     dawnlyDb.pendingMutations,
     async () => {
-      await dawnlyDb.transactions.put(transaction)
-      await dawnlyDb.pendingMutations.put(mutation)
+      await dawnlyDb.transactions.put(storedTransaction)
+      await dawnlyDb.pendingMutations.put(storedMutation)
     },
   )
   notifyLocalDataChanged()
@@ -241,11 +378,12 @@ export async function queueUpdateTransaction(
   transactionId: string,
   input: TransactionUpdateInput,
 ): Promise<{ transaction: Transaction; mutation: PendingMutation }> {
-  const currentTransaction = await dawnlyDb.transactions.get(transactionId)
-  if (!currentTransaction) {
+  const storedCurrentTransaction = await dawnlyDb.transactions.get(transactionId)
+  if (!storedCurrentTransaction) {
     throw new Error('لا توجد نسخة محلية من المعاملة')
   }
 
+  const currentTransaction = await readTransactionRecord(storedCurrentTransaction)
   const clientMutationId = input.client_mutation_id ?? newUuid()
   const payload = toUpdatePayload(input)
   const transaction = applyUpdate(currentTransaction, payload)
@@ -254,14 +392,16 @@ export async function queueUpdateTransaction(
     ...createMutationMetadata(transactionId, clientMutationId),
     payload,
   })
+  const storedTransaction = await storeTransactionRecord(transaction)
+  const storedMutation = await storeMutationRecord(mutation)
 
   await dawnlyDb.transaction(
     'rw',
     dawnlyDb.transactions,
     dawnlyDb.pendingMutations,
     async () => {
-      await dawnlyDb.transactions.put(transaction)
-      await dawnlyDb.pendingMutations.put(mutation)
+      await dawnlyDb.transactions.put(storedTransaction)
+      await dawnlyDb.pendingMutations.put(storedMutation)
     },
   )
   notifyLocalDataChanged()
@@ -277,6 +417,7 @@ export async function queueDeleteTransaction(
     ...createMutationMetadata(transactionId, clientMutationId),
     payload: null,
   })
+  const storedMutation = await storeMutationRecord(mutation)
 
   await dawnlyDb.transaction(
     'rw',
@@ -284,7 +425,7 @@ export async function queueDeleteTransaction(
     dawnlyDb.pendingMutations,
     async () => {
       await dawnlyDb.transactions.delete(transactionId)
-      await dawnlyDb.pendingMutations.put(mutation)
+      await dawnlyDb.pendingMutations.put(storedMutation)
     },
   )
   notifyLocalDataChanged()
@@ -296,7 +437,7 @@ export async function readNextPendingMutation(): Promise<PendingMutation | null>
   const nextMutation = pendingMutations.sort((firstMutation, secondMutation) =>
     firstMutation.createdAt.localeCompare(secondMutation.createdAt),
   )[0]
-  return nextMutation ? pendingMutationSchema.parse(nextMutation) : null
+  return nextMutation ? readMutationRecord(nextMutation) : null
 }
 
 export async function markMutationAttempt(
@@ -308,7 +449,7 @@ export async function markMutationAttempt(
     updatedAt: nowIso(),
     lastError: null,
   })
-  await dawnlyDb.pendingMutations.put(attemptedMutation)
+  await dawnlyDb.pendingMutations.put(await storeMutationRecord(attemptedMutation))
   return attemptedMutation
 }
 
@@ -320,13 +461,13 @@ export async function markMutationError(
   if (!mutation) {
     return
   }
-  await dawnlyDb.pendingMutations.put(
-    pendingMutationSchema.parse({
-      ...mutation,
-      updatedAt: nowIso(),
-      lastError: message,
-    }),
-  )
+  const currentMutation = await readMutationRecord(mutation)
+  const failedMutation = pendingMutationSchema.parse({
+    ...currentMutation,
+    updatedAt: nowIso(),
+    lastError: message,
+  })
+  await dawnlyDb.pendingMutations.put(await storeMutationRecord(failedMutation))
   notifyLocalDataChanged()
 }
 
@@ -345,7 +486,9 @@ export async function removeMutationsForTransaction(
 export async function markLocalTransactionSynced(
   transaction: Transaction,
 ): Promise<void> {
-  await dawnlyDb.transactions.put(toLocalTransaction(transaction))
+  await dawnlyDb.transactions.put(
+    await storeTransactionRecord(toLocalTransaction(transaction)),
+  )
   notifyLocalDataChanged()
 }
 

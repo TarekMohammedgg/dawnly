@@ -4,6 +4,7 @@ import {
   type AuthSession,
   type AuthSessionContextValue,
 } from '../lib/auth/sessionContext'
+import { clearLocalEncryptionKey } from '../lib/local/encryption'
 
 type AuthSessionProviderProps = {
   children: ReactNode
@@ -27,6 +28,7 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
     const expiresAt = Date.parse(session.expiresAt)
     const remaining = expiresAt - Date.now()
     const timer = window.setTimeout(() => {
+      clearLocalEncryptionKey()
       setSessionState(null)
     }, remaining)
 
@@ -40,6 +42,7 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
         setSessionState(next)
       },
       clearSession: () => {
+        clearLocalEncryptionKey()
         setSessionState(null)
       },
     }),

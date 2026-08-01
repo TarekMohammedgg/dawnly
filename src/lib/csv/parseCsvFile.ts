@@ -1,6 +1,7 @@
 import Papa from 'papaparse'
 import {
   CSV_HEADERS,
+  CSV_MAX_FILE_BYTES,
   CSV_REQUIRED_HEADERS,
   CSV_SEPARATOR,
   CSV_UTF8_BOM,
@@ -36,11 +37,19 @@ function missingRequiredHeaders(headers: string[]): string[] {
   return CSV_REQUIRED_HEADERS.filter((header) => !present.has(header))
 }
 
+function isCsvTooLarge(text: string): boolean {
+  return new TextEncoder().encode(text).byteLength > CSV_MAX_FILE_BYTES
+}
+
 /**
  * Parses a comma-separated CSV text in the browser.
  * Strips a UTF-8 BOM, trims headers/values, and ignores blank rows.
  */
 export function parseCsvText(text: string): CsvFileParseResult {
+  if (isCsvTooLarge(text)) {
+    return { ok: false, message: 'ملف CSV كبير جداً' }
+  }
+
   const cleaned = stripBom(text)
   if (!cleaned.trim()) {
     return { ok: false, message: 'تعذر قراءة الملف. تأكد أنه ملف CSV صالح' }
@@ -89,6 +98,10 @@ export function parseCsvText(text: string): CsvFileParseResult {
 
 /** Reads a single File as UTF-8 text then parses it as CSV. */
 export async function parseCsvFile(file: File): Promise<CsvFileParseResult> {
+  if (file.size > CSV_MAX_FILE_BYTES) {
+    return { ok: false, message: 'ملف CSV كبير جداً' }
+  }
+
   try {
     const text = await file.text()
     return parseCsvText(text)

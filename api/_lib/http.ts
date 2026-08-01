@@ -1,5 +1,32 @@
 import type { ApiErrorCode, ApiErrorResponse } from '../../src/types/api.js'
 
+export type HeaderResponse = {
+  setHeader(name: string, value: string): unknown
+}
+
+export function setNoStore(response: HeaderResponse): void {
+  response.setHeader('Cache-Control', 'no-store, max-age=0')
+  response.setHeader('Pragma', 'no-cache')
+}
+
+export function isJsonRequestTooLarge(
+  body: unknown,
+  declaredLength: string | undefined,
+  maxBytes: number,
+): boolean {
+  const contentLength = declaredLength ? Number(declaredLength) : NaN
+  if (Number.isFinite(contentLength) && contentLength > maxBytes) {
+    return true
+  }
+
+  const serializedBody = JSON.stringify(body)
+  if (serializedBody === undefined) {
+    return false
+  }
+
+  return new TextEncoder().encode(serializedBody).byteLength > maxBytes
+}
+
 export function json(
   status: number,
   body: unknown,

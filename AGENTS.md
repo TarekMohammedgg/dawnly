@@ -21,8 +21,10 @@ and accessible to a non-technical user. Do not add out-of-scope features.
    Supabase Vault; allow updates only through the authenticated Settings → API
    route path. Optional Vercel env `OPENROUTER_API_KEY` and `MINIMAX_API_KEY` are
    bootstrap fallbacks only.
-3. Preserve the local-first architecture: IndexedDB is the offline cache and
-   pending-sync queue; Supabase is the remote source of truth.
+3. Preserve the local-first architecture: IndexedDB is the encrypted offline
+   cache and pending-sync queue; Supabase is the remote source of truth. The
+   AES-GCM key is derived from the verified PIN in memory and is never
+   persisted.
 4. Maintain the six-digit PIN gate, one-minute lockout after five failures,
    protected server-side API routes, and restrictive Supabase RLS policies.
 5. Keep all visible interface text Arabic and RTL. Support only EGP,
@@ -57,9 +59,11 @@ dependency upgrade, update this table and `docs/PRD.md`, then run all guards.
 9. Use MUI `9.2.0` as the component library for the UI.
 10. Phase 4 local-first data must use the shared `LocalTransaction` and
     `PendingMutation` shapes, Dexie tables named `transactions`,
-    `pendingMutations`, and `metadata`, and one sequential sync worker. Every
-    queued server mutation carries a client mutation ID; server receipts remain
-    server-only and are never stored in the browser.
+    `pendingMutations`, and `metadata`, and one sequential sync worker. The
+    sensitive payloads stored in those tables must remain AES-GCM encrypted
+    with the in-memory PIN-derived key. Every queued server mutation carries a
+    client mutation ID; server receipts remain server-only and are never stored
+    in the browser.
 11. Keep the dashboard in the initial client bundle and lazy-load the import,
     ledger, person, and settings routes so the initial mobile download stays
     below the production bundle warning threshold.

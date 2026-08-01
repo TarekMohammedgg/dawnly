@@ -1,5 +1,5 @@
 /** @vitest-environment node */
-import type { VercelRequest, VercelResponse } from '@vercel/node'
+import type { DawnlyRequest, DawnlyResponse } from '../_lib/platformTypes'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import handler from './supabase.js'
 
@@ -25,7 +25,7 @@ function setHealthEnvironment(): void {
 }
 
 function createResponseRecorder(): {
-  response: VercelResponse
+  response: DawnlyResponse
   read: () => { status: number; body: unknown }
 } {
   let status = 200
@@ -40,7 +40,7 @@ function createResponseRecorder(): {
       body = nextBody
       return response
     },
-  } as unknown as VercelResponse
+  } as unknown as DawnlyResponse
 
   return {
     response,
@@ -48,11 +48,11 @@ function createResponseRecorder(): {
   }
 }
 
-function createRequest(secret?: string): VercelRequest {
+function createRequest(secret?: string): DawnlyRequest {
   return {
     method: 'GET',
     headers: secret ? { 'x-dawnly-cron-secret': secret } : {},
-  } as unknown as VercelRequest
+  } as unknown as DawnlyRequest
 }
 
 afterEach(() => {

@@ -1,13 +1,16 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
+import type { DawnlyRequest, DawnlyResponse } from '../_lib/platformTypes.js'
 import { createSecretClient, readServerEnv } from '../_lib/env.js'
 import { createSupabasePinAttemptStore } from '../_lib/pinAttemptStore.js'
+import { setNoStore } from '../_lib/http.js'
 import { errorType, logServerFailure } from '../_lib/observability.js'
 import { handleVerifyPin } from '../_lib/verifyPin.js'
 
 export default async function handler(
-  request: VercelRequest,
-  response: VercelResponse,
+  request: DawnlyRequest,
+  response: DawnlyResponse,
 ) {
+  setNoStore(response)
+
   if (request.method !== 'POST') {
     response.setHeader('Allow', 'POST')
     return response.status(405).json({

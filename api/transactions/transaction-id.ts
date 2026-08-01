@@ -1,11 +1,11 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
+import type { DawnlyRequest, DawnlyResponse } from '../_lib/platformTypes.js'
 import { z } from 'zod'
 import {
   transactionDeleteSchema,
   transactionUpdateSchema,
 } from '../../src/types/api.js'
 import { readServerEnv } from '../_lib/env.js'
-import { apiError } from '../_lib/http.js'
+import { apiError, setNoStore } from '../_lib/http.js'
 import { errorType, logServerFailure } from '../_lib/observability.js'
 import { requireDawnlySession } from '../_lib/requireSession.js'
 import {
@@ -15,7 +15,7 @@ import {
 
 const idSchema = z.string().uuid()
 
-function readTransactionId(query: VercelRequest['query']): string | null {
+function readTransactionId(query: DawnlyRequest['query']): string | null {
   const raw = query.id
   if (typeof raw === 'string') {
     return raw
@@ -27,9 +27,11 @@ function readTransactionId(query: VercelRequest['query']): string | null {
 }
 
 export default async function handler(
-  request: VercelRequest,
-  response: VercelResponse,
+  request: DawnlyRequest,
+  response: DawnlyResponse,
 ) {
+  setNoStore(response)
+
   if (request.method !== 'PATCH' && request.method !== 'DELETE') {
     response.setHeader('Allow', 'PATCH, DELETE')
     return response.status(405).json({

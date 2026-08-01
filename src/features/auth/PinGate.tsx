@@ -7,6 +7,11 @@ import Typography from '@mui/material/Typography'
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { apiFetch, ApiClientError } from '../../lib/api/client'
 import { useAuthSession } from '../../lib/auth/sessionContext'
+import {
+  clearLocalEncryptionKey,
+  setLocalEncryptionKey,
+} from '../../lib/local/encryption'
+import { migrateLegacyLocalData } from '../../lib/local/transactions'
 import type { VerifyPinSuccess } from '../../types/api'
 
 type PinGateProps = {
@@ -33,12 +38,15 @@ export function PinGate({ children }: PinGateProps) {
         method: 'POST',
         body: { pin },
       })
+      await setLocalEncryptionKey(pin)
+      await migrateLegacyLocalData()
       setSession({
         token: result.token,
         expiresAt: result.expires_at,
       })
       setPin('')
     } catch (cause) {
+      clearLocalEncryptionKey()
       if (cause instanceof ApiClientError) {
         setError(cause.message)
       } else {
