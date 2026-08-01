@@ -26,15 +26,22 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  background: #f7f5f1;
+  color: #1d2522;
 }
 
 :focus-visible {
-  outline: 3px solid #3f5e5a;
+  outline: 3px solid #1d5b52;
   outline-offset: 2px;
 }
 
 [data-color-mode='dark'] :focus-visible {
-  outline-color: #8fb3ad;
+  outline-color: #8cc5b6;
+}
+
+::selection {
+  background: #dcece7;
+  color: #123f39;
 }
 
 button,
@@ -45,8 +52,8 @@ a,
 }
 
 .theme-mode-toggle {
-  --theme-toggle-track: #aeb4b9;
-  --theme-toggle-active-track: #3f5e5a;
+  --theme-toggle-track: #b5bdb9;
+  --theme-toggle-active-track: #1d5b52;
   --theme-toggle-thumb: #ffffff;
   appearance: none;
   position: relative;
@@ -83,8 +90,8 @@ a,
 }
 
 [data-color-mode='dark'] .theme-mode-toggle {
-  --theme-toggle-track: #596168;
-  --theme-toggle-active-track: #8fb3ad;
+  --theme-toggle-track: #53635e;
+  --theme-toggle-active-track: #8cc5b6;
   --theme-toggle-thumb: #10201d;
 }
 
@@ -97,12 +104,30 @@ a,
 }
 
 .theme-mode-toggle:focus-visible {
-  outline: 3px solid #3f5e5a;
+  outline: 3px solid #1d5b52;
   outline-offset: 3px;
 }
 
 [data-color-mode='dark'] .theme-mode-toggle:focus-visible {
-  outline-color: #8fb3ad;
+  outline-color: #8cc5b6;
+}
+
+.dawnly-recording-pulse {
+  animation: dawnly-recording-pulse 1.5s ease-out infinite;
+}
+
+@keyframes dawnly-recording-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgb(255 255 255 / 34%);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgb(255 255 255 / 0%);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgb(255 255 255 / 0%);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

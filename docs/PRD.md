@@ -144,6 +144,7 @@ The application is designed to be calm and easy for the project owner's mother: 
 
 - Complete right-to-left support, Arabic only, and a readable Arabic typeface.
 - Calm and neutral presentation, low information density, direct language, and large mobile-friendly controls.
+- Dawnly branding uses deep teal for trust, warm terracotta for primary capture actions, a soft cream canvas, and a simple ledger mark shared by the shell and installable app icon.
 - No AI gradients or chat-like interface.
 - Web-first responsive design.
 - PWA installable as a home-screen shortcut for fast access.

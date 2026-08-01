@@ -5,6 +5,7 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useState, type FormEvent, type ReactNode } from 'react'
+import { BrandMark } from '../../components/BrandMark'
 import { apiFetch, ApiClientError } from '../../lib/api/client'
 import { useAuthSession } from '../../lib/auth/sessionContext'
 import {
@@ -73,15 +74,31 @@ export function PinGate({ children }: PinGateProps) {
         component="form"
         onSubmit={onSubmit}
         spacing={2}
-        sx={{ width: '100%', maxWidth: 360 }}
+        sx={{
+          width: '100%',
+          maxWidth: 380,
+          p: { xs: 2.5, sm: 3.5 },
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: 4,
+          bgcolor: 'background.paper',
+          boxShadow: '0 18px 50px rgba(29, 37, 34, 0.08)',
+        }}
       >
-        <Typography
-          variant="h5"
-          component="h1"
-          sx={{ textAlign: 'center' }}
-        >
-          Dawnly
-        </Typography>
+        <Stack spacing={1.25} sx={{ alignItems: 'center', mb: 0.5 }}>
+          <BrandMark size="large" />
+          <Typography variant="h5" component="h1" sx={{ textAlign: 'center' }}>
+            Dawnly
+          </Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ textAlign: 'center' }}
+          >
+            دفتر بسيط وهادئ لكل اللي ليك واللي عليك
+          </Typography>
+        </Stack>
+        <Box sx={{ height: 1, bgcolor: 'divider', my: 0.5 }} />
         <Typography
           variant="body2"
           color="text.secondary"
