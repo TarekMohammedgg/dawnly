@@ -123,9 +123,15 @@ The application is designed to be calm and easy for the project owner's mother: 
 - Opened by selecting a name from the ledger or search results.
 - Shows that person's total `ليّا`, total `عليّا`, net balance, and chronological transaction list.
 
+### People
+
+- The bottom navigation includes a People page with a simple responsive grid of all recorded people.
+- Each person card shows the person's name, transaction count, and direction totals.
+- Selecting a person card opens that person's detail page and chronological ledger.
+
 ### Import and export
 
-- CSV import only, as described in section 5.4.
+- CSV import only, as described in section 5.4, and reachable from Settings.
 - CSV export for a user-downloadable backup from Settings.
 
 ### Settings
@@ -136,6 +142,7 @@ The application is designed to be calm and easy for the project owner's mother: 
   stored encrypted in Supabase Vault and are never shown again after save; only
   a configured / not-configured status is displayed per provider.
 - CSV backup export.
+- CSV import and export actions are grouped together as data-management controls.
 - Sign out, which clears the in-memory authenticated session and local-cache
   encryption key before returning the user to the lock screen.
 - No user-facing control to delete all data or change/recover the PIN.

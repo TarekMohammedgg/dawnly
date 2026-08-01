@@ -1,5 +1,8 @@
+import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined'
+import UploadFileOutlinedIcon from '@mui/icons-material/UploadFileOutlined'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
+import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
@@ -10,6 +13,8 @@ import { apiFetch, ApiClientError } from '../../lib/api/client'
 import { useAuthSession } from '../../lib/auth/sessionContext'
 import { buildTransactionsCsv, downloadCsvFile } from '../../lib/csv/exportCsv'
 import { readCachedTransactions } from '../../lib/local/transactions'
+import { useAppRouter } from '../../lib/routing/routerContext'
+import { APP_ROUTES } from '../../lib/routing/routes'
 import { useColorMode } from '../../lib/theme/colorModeContext'
 import type { AiKeyStatus, AiProvider } from '../../types/api'
 
@@ -60,6 +65,7 @@ function ThemeModeToggle({ checked, onChange }: ThemeModeToggleProps) {
 }
 
 export function SettingsPage() {
+  const { navigate } = useAppRouter()
   const { mode, setMode } = useColorMode()
   const { session, clearSession } = useAuthSession()
   const isDark = mode === 'dark'
@@ -138,7 +144,6 @@ export function SettingsPage() {
       })
       setStatus(next)
       setProvider(next.provider)
-      setMessage(`تم التبديل إلى ${PROVIDER_LABELS[next.provider]}`)
     } catch (cause) {
       setProvider(status?.provider ?? 'openrouter')
       setError(
@@ -259,6 +264,24 @@ export function SettingsPage() {
             '& .MuiToggleButton-root': {
               fontWeight: 700,
               py: 1.25,
+              color: 'text.secondary',
+              borderColor: 'divider',
+              transition:
+                'background-color 160ms ease, border-color 160ms ease, color 160ms ease',
+              '&:hover': {
+                backgroundColor: 'action.hover',
+                color: 'primary.main',
+                borderColor: 'primary.main',
+              },
+              '&.Mui-selected': {
+                backgroundColor: 'action.selected',
+                color: 'primary.main',
+                borderColor: 'primary.main',
+                fontWeight: 800,
+                '&:hover': {
+                  backgroundColor: 'action.selected',
+                },
+              },
             },
           }}
         >
@@ -308,34 +331,46 @@ export function SettingsPage() {
         </Button>
       </Stack>
 
-      <Stack
-        spacing={1.5}
-        sx={{
-          borderTop: 1,
-          borderColor: 'divider',
-          pt: 3,
-        }}
+      <Paper
+        variant="outlined"
+        sx={{ p: 2, borderRadius: 3, bgcolor: 'background.paper' }}
       >
-        <Typography variant="h6" component="h3" sx={{ fontWeight: 700 }}>
-          نسخة احتياطية CSV
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          صدّر كل المعاملات المحفوظة محليًا بترتيب الأحدث أولًا.
-        </Typography>
-        {exportMessage ? <Alert severity="success">{exportMessage}</Alert> : null}
-        {exportError ? <Alert severity="error">{exportError}</Alert> : null}
-        <Button
-          variant="outlined"
-          size="large"
-          disabled={exporting}
-          onClick={() => {
-            void onExportCsv()
-          }}
-          sx={{ alignSelf: 'start', fontWeight: 700 }}
-        >
-          تصدير CSV
-        </Button>
-      </Stack>
+        <Stack spacing={1.5}>
+          <Typography variant="h6" component="h3" sx={{ fontWeight: 700 }}>
+            إدارة البيانات
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            استورد معاملاتك من ملف CSV أو نزّل نسخة احتياطية من البيانات المحفوظة محليًا.
+          </Typography>
+          {exportMessage ? <Alert severity="success">{exportMessage}</Alert> : null}
+          {exportError ? <Alert severity="error">{exportError}</Alert> : null}
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<UploadFileOutlinedIcon />}
+              onClick={() => {
+                navigate(APP_ROUTES.import)
+              }}
+              sx={{ fontWeight: 700 }}
+            >
+              استيراد CSV
+            </Button>
+            <Button
+              variant="outlined"
+              size="large"
+              disabled={exporting}
+              startIcon={<DownloadOutlinedIcon />}
+              onClick={() => {
+                void onExportCsv()
+              }}
+              sx={{ fontWeight: 700 }}
+            >
+              تصدير CSV
+            </Button>
+          </Stack>
+        </Stack>
+      </Paper>
 
       <Button
         variant="outlined"

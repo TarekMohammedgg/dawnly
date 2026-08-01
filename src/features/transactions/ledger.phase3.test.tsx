@@ -310,4 +310,22 @@ describe('Phase 3 ledger experience', () => {
     expect(screen.getByLabelText('إجمالي ليّا').textContent).toContain('ج.م')
     expect(screen.getByText('الصافي')).toBeTruthy()
   })
+
+  it('opens person detail from the people grid', async () => {
+    mockLedgerApis()
+    const user = userEvent.setup()
+    render(<App />)
+    await unlockApp(user)
+
+    await user.click(screen.getByRole('button', { name: 'الأشخاص' }))
+    expect(await screen.findByRole('heading', { name: 'الأشخاص' })).toBeTruthy()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'عرض سجل أحمد' }),
+    )
+
+    expect(await screen.findByRole('heading', { name: 'أحمد' })).toBeTruthy()
+    expect(window.location.pathname).toBe('/person')
+    expect(window.location.search).toContain('name=')
+  })
 })

@@ -17,9 +17,9 @@ export default defineConfig(({ mode }) => {
         includeAssets: ['favicon.svg', 'pwa-icon-192.svg', 'pwa-icon-512.svg'],
         manifest: {
           id: '/',
-          name: 'دفتر ليّا وعليّا',
-          short_name: 'دفتر ليّا',
-          description: 'دفتر شخصي هادئ لتسجيل المبالغ ليّا وعليّا',
+          name: 'دونلي — دفتر ليّا وعليّا',
+          short_name: 'دونلي',
+          description: 'دونلي — دفتر شخصي هادئ لتسجيل المبالغ ليّا وعليّا',
           lang: 'ar',
           dir: 'rtl',
           start_url: '/',

@@ -65,8 +65,8 @@ dependency upgrade, update this table and `docs/PRD.md`, then run all guards.
     client mutation ID; server receipts remain server-only and are never stored
     in the browser.
 11. Keep the dashboard in the initial client bundle and lazy-load the import,
-    ledger, person, and settings routes so the initial mobile download stays
-    below the production bundle warning threshold.
+    ledger, people, person, and settings routes so the initial mobile download
+    stays below the production bundle warning threshold.
 12. Phase 7 uses `vite-plugin-pwa` to generate an Arabic RTL standalone app
     shell. The service worker may cache static shell assets and navigation but
     must exclude `/api/*`; never cache transaction responses in the service

@@ -23,6 +23,11 @@ const PersonPage = lazy(async () => {
   return { default: module.PersonPage }
 })
 
+const PeoplePage = lazy(async () => {
+  const module = await import('./features/person/PeoplePage.tsx')
+  return { default: module.PeoplePage }
+})
+
 const SettingsPage = lazy(async () => {
   const module = await import('./features/settings/SettingsPage.tsx')
   return { default: module.SettingsPage }
@@ -35,6 +40,7 @@ function AppRoutes() {
     <Suspense fallback={<LoadingState label="جاري تحميل الصفحة…" />}>
       {routeId === 'ledger' ? <LedgerPage /> : null}
       {routeId === 'import' ? <ImportPage /> : null}
+      {routeId === 'people' ? <PeoplePage /> : null}
       {routeId === 'settings' ? <SettingsPage /> : null}
       {routeId === 'person' ? <PersonPage /> : null}
       {routeId === 'dashboard' ? <DashboardPage /> : null}

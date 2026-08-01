@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import {
   afterEach,
@@ -24,7 +24,7 @@ afterEach(() => {
 function mockAuthenticatedApis() {
   vi.stubGlobal(
     'fetch',
-    vi.fn(async (input: RequestInfo | URL) => {
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input)
 
       if (url.includes('/api/auth/verify-pin')) {
@@ -35,8 +35,11 @@ function mockAuthenticatedApis() {
       }
 
       if (url.includes('/api/settings/ai-key')) {
+        const requestBody = init?.body ? JSON.parse(String(init.body)) : null
+        const requestedProvider =
+          requestBody?.provider === 'minimax' ? 'minimax' : 'openrouter'
         return Response.json({
-          provider: 'openrouter',
+          provider: requestedProvider,
           openrouter: { configured: false },
           minimax: { configured: false },
         })
@@ -88,10 +91,15 @@ describe('Dawnly foundation shell', () => {
     const nav = screen.getByRole('navigation', { name: 'التنقل الرئيسي' })
     expect(within(nav).getByRole('button', { name: 'الرئيسية' })).toBeTruthy()
     expect(within(nav).getByRole('button', { name: 'السجل' })).toBeTruthy()
-    expect(within(nav).getByRole('button', { name: 'استيراد' })).toBeTruthy()
+    expect(within(nav).getByRole('button', { name: 'الأشخاص' })).toBeTruthy()
     expect(within(nav).getByRole('button', { name: 'الإعدادات' })).toBeTruthy()
 
-    await user.click(within(nav).getByRole('button', { name: 'استيراد' }))
+    await user.click(within(nav).getByRole('button', { name: 'الأشخاص' }))
+    expect(await screen.findByRole('heading', { name: 'الأشخاص' })).toBeTruthy()
+
+    await user.click(within(nav).getByRole('button', { name: 'الإعدادات' }))
+    expect(await screen.findByRole('heading', { name: 'الإعدادات' })).toBeTruthy()
+    await user.click(await screen.findByRole('button', { name: 'استيراد CSV' }))
     expect(await screen.findByRole('heading', { name: 'استيراد' })).toBeTruthy()
   })
 
@@ -152,6 +160,21 @@ describe('Dawnly foundation shell', () => {
     ).toBe('translateX(0)')
   })
 
+  it('switches API providers without showing a switch message', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await unlockApp(user)
+
+    await user.click(screen.getByRole('button', { name: 'الإعدادات' }))
+    const minimaxButton = await screen.findByRole('button', { name: 'MiniMax' })
+    await user.click(minimaxButton)
+
+    await waitFor(() => {
+      expect(minimaxButton.getAttribute('aria-pressed')).toBe('true')
+    })
+    expect(screen.queryByText(/تم التبديل إلى/)).toBeNull()
+  })
+
   it('keeps the shell usable at a narrow mobile width', async () => {
     Object.defineProperty(window, 'innerWidth', {
       configurable: true,
@@ -168,7 +191,7 @@ describe('Dawnly foundation shell', () => {
     const { container } = renderApp()
     await unlockApp(user)
 
-    expect(screen.getByRole('heading', { name: 'Dawnly' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'دونلي' })).toBeTruthy()
     expect(
       screen.getByRole('navigation', { name: 'التنقل الرئيسي' }),
     ).toBeTruthy()

@@ -80,7 +80,7 @@ export function PinGate({ children }: PinGateProps) {
           component="h1"
           sx={{ textAlign: 'center' }}
         >
-          Dawnly
+          دونلي
         </Typography>
         <Typography
           variant="body2"

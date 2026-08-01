@@ -2,6 +2,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppThemeProvider } from '../../components/AppThemeProvider'
+import { AppRouterProvider } from '../../components/AppRouterProvider'
 import { AuthSessionProvider } from '../../components/AuthSessionProvider'
 import { useAuthSession } from '../../lib/auth/sessionContext'
 import { clearLocalDatabase } from '../../lib/local/database'
@@ -32,7 +33,9 @@ function renderWithSession(ui: ReactNode) {
   return render(
     <AppThemeProvider>
       <AuthSessionProvider>
-        <SeedSession>{ui}</SeedSession>
+        <AppRouterProvider>
+          <SeedSession>{ui}</SeedSession>
+        </AppRouterProvider>
       </AuthSessionProvider>
     </AppThemeProvider>,
   )

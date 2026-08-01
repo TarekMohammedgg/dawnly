@@ -164,6 +164,24 @@ export function TransactionForm({
               fontWeight: 700,
               py: 1.25,
               minHeight: 44,
+              color: 'text.secondary',
+              borderColor: 'divider',
+              transition:
+                'background-color 160ms ease, border-color 160ms ease, color 160ms ease',
+              '&:hover': {
+                backgroundColor: 'action.hover',
+                color: 'primary.main',
+                borderColor: 'primary.main',
+              },
+              '&.Mui-selected': {
+                backgroundColor: 'action.selected',
+                color: 'primary.main',
+                borderColor: 'primary.main',
+                fontWeight: 800,
+                '&:hover': {
+                  backgroundColor: 'action.selected',
+                },
+              },
             },
           }}
         >

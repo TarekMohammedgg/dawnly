@@ -1,4 +1,8 @@
+import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded'
+import Avatar from '@mui/material/Avatar'
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { AmountDisplay } from '../../components/AmountDisplay'
@@ -68,59 +72,80 @@ export function PersonPage() {
 
   return (
     <Stack spacing={3}>
-      <Stack
-        direction="row"
-        spacing={1}
-        sx={{ alignItems: 'center', justifyContent: 'space-between' }}
+      <Paper
+        variant="outlined"
+        sx={{ p: 2, borderRadius: 3, bgcolor: 'background.paper' }}
       >
-        <Typography variant="h5" component="h2" sx={{ fontWeight: 700 }}>
-          {displayName}
-        </Typography>
-        <Button
-          variant="text"
-          onClick={() => {
-            navigate(APP_ROUTES.ledger)
-          }}
-          sx={{ minHeight: 44 }}
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1.5}
+          sx={{ alignItems: { sm: 'center' } }}
         >
-          رجوع
-        </Button>
-      </Stack>
+          <Avatar
+            sx={{
+              width: 48,
+              height: 48,
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
+              fontWeight: 800,
+            }}
+          >
+            {[...displayName.trim()][0] ?? '؟'}
+          </Avatar>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="overline" color="text.secondary">
+              ملف الشخص
+            </Typography>
+            <Typography variant="h5" component="h2" sx={{ fontWeight: 700 }}>
+              {displayName}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {personTransactions.length} معاملات مسجلة
+            </Typography>
+          </Box>
+          <Button
+            variant="text"
+            endIcon={<ArrowBackIosNewRoundedIcon fontSize="small" />}
+            onClick={() => {
+              navigate(APP_ROUTES.ledger)
+            }}
+            sx={{ minHeight: 44, alignSelf: { xs: 'flex-start', sm: 'auto' } }}
+          >
+            رجوع
+          </Button>
+        </Stack>
+      </Paper>
 
       <SummaryCards
         receivableTotal={summary.receivable}
         payableTotal={summary.payable}
       />
 
-      <Stack
-        spacing={0.5}
-        sx={{
-          border: 1,
-          borderColor: 'divider',
-          borderRadius: 1,
-          px: 2,
-          py: 1.5,
-        }}
+      <Paper
+        variant="outlined"
+        sx={{ p: 2, borderRadius: 3, bgcolor: 'action.hover' }}
       >
-        <Typography variant="subtitle2" color="text.secondary">
-          الصافي
-        </Typography>
-        <Typography variant="body1" sx={{ fontWeight: 700 }}>
-          {summary.net === 0 ? (
-            'متوازن'
-          ) : summary.net > 0 ? (
-            <>
-              {DIRECTION_LABELS.receivable}{' '}
-              <AmountDisplay amount={summary.net} />
-            </>
-          ) : (
-            <>
-              {DIRECTION_LABELS.payable}{' '}
-              <AmountDisplay amount={Math.abs(summary.net)} />
-            </>
-          )}
-        </Typography>
-      </Stack>
+        <Stack spacing={0.5}>
+          <Typography variant="subtitle2" color="text.secondary">
+            الصافي
+          </Typography>
+          <Typography variant="body1" sx={{ fontWeight: 700 }}>
+            {summary.net === 0 ? (
+              'متوازن'
+            ) : summary.net > 0 ? (
+              <>
+                {DIRECTION_LABELS.receivable}{' '}
+                <AmountDisplay amount={summary.net} />
+              </>
+            ) : (
+              <>
+                {DIRECTION_LABELS.payable}{' '}
+                <AmountDisplay amount={Math.abs(summary.net)} />
+              </>
+            )}
+          </Typography>
+        </Stack>
+      </Paper>
 
       <Stack spacing={1.5}>
         <Typography variant="h6" component="h3" sx={{ fontWeight: 700 }}>

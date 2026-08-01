@@ -1,6 +1,6 @@
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined'
-import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined'
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined'
+import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined'
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined'
 import AppBar from '@mui/material/AppBar'
 import BottomNavigation from '@mui/material/BottomNavigation'
@@ -18,7 +18,7 @@ import { NAV_ITEMS } from '../lib/routing/routes'
 const ROUTE_ICONS: Record<(typeof NAV_ITEMS)[number]['id'], ReactNode> = {
   dashboard: <HomeOutlinedIcon />,
   ledger: <AccountBalanceWalletOutlinedIcon />,
-  import: <FileUploadOutlinedIcon />,
+  people: <PeopleOutlinedIcon />,
   settings: <SettingsOutlinedIcon />,
 }
 
@@ -28,7 +28,12 @@ type AppShellProps = {
 
 export function AppShell({ children }: AppShellProps) {
   const { routeId, navigate } = useAppRouter()
-  const navValue = routeId === 'person' ? 'ledger' : routeId
+  const navValue =
+    routeId === 'person'
+      ? 'people'
+      : routeId === 'import'
+        ? 'settings'
+        : routeId
 
   return (
     <Box
@@ -41,12 +46,24 @@ export function AppShell({ children }: AppShellProps) {
     >
       <AppBar position="sticky" color="default" elevation={0}>
         <Toolbar>
+          <Box
+            component="img"
+            src="/favicon.svg"
+            alt=""
+            aria-hidden="true"
+            sx={{
+              width: 36,
+              height: 36,
+              borderRadius: 2,
+              mr: 1,
+            }}
+          />
           <Typography
             variant="h6"
             component="h1"
             sx={{ flexGrow: 1, fontWeight: 700 }}
           >
-            Dawnly
+            دونلي
           </Typography>
         </Toolbar>
       </AppBar>
