@@ -2,14 +2,14 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import {
   extractTransactionRequestSchema,
   type ExtractTransactionResponse,
-} from '../../src/types/api.ts'
-import { extractTransactionDraft } from '../_lib/ai/extractTransaction.ts'
-import { allowAiExtractRequest } from '../_lib/ai/rateLimit.ts'
-import { readServerEnv } from '../_lib/env.ts'
-import { apiError, readBearerToken } from '../_lib/http.ts'
-import { errorType, logServerFailure } from '../_lib/observability.ts'
-import { resolveAiApiKey } from '../_lib/openRouterSecret.ts'
-import { requireDawnlySession } from '../_lib/requireSession.ts'
+} from '../../src/types/api.js'
+import { extractTransactionDraft } from '../_lib/ai/extractTransaction.js'
+import { allowAiExtractRequest } from '../_lib/ai/rateLimit.js'
+import { readServerEnv } from '../_lib/env.js'
+import { apiError, readBearerToken } from '../_lib/http.js'
+import { errorType, logServerFailure } from '../_lib/observability.js'
+import { resolveAiApiKey } from '../_lib/openRouterSecret.js'
+import { requireDawnlySession } from '../_lib/requireSession.js'
 
 function isAbortError(cause: unknown): boolean {
   return (

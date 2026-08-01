@@ -2,12 +2,12 @@ import {
   evaluateLockout,
   nextStateAfterFailure,
   resetPinAttemptState,
-} from './pinLockout.ts'
-import { isSixDigitPin, verifyPinHash } from './pinHash.ts'
-import { createSessionToken } from './sessionToken.ts'
-import { verifyPinRequestSchema } from '../../src/types/api.ts'
-import type { PinAttemptStore } from './pinAttemptStore.ts'
-import { apiError, json } from './http.ts'
+} from './pinLockout.js'
+import { isSixDigitPin, verifyPinHash } from './pinHash.js'
+import { createSessionToken } from './sessionToken.js'
+import { verifyPinRequestSchema } from '../../src/types/api.js'
+import type { PinAttemptStore } from './pinAttemptStore.js'
+import { apiError, json } from './http.js'
 
 export type VerifyPinDeps = {
   pinHash: string

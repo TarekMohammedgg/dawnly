@@ -1,4 +1,4 @@
-import type { ApiErrorCode, ApiErrorResponse } from '../../src/types/api.ts'
+import type { ApiErrorCode, ApiErrorResponse } from '../../src/types/api.js'
 
 export function json(
   status: number,

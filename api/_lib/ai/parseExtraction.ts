@@ -1,8 +1,8 @@
 import {
   extractTransactionDraftSchema,
   type ExtractTransactionDraft,
-} from '../../../src/types/api.ts'
-import { NOTES_MAX_LENGTH, normalizeNotes } from '../../../src/types/transaction.ts'
+} from '../../../src/types/api.js'
+import { NOTES_MAX_LENGTH, normalizeNotes } from '../../../src/types/transaction.js'
 
 /**
  * Strips optional markdown fences and parses the model JSON into a draft.

@@ -1,11 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { createSecretClient, readServerEnv } from '../_lib/env.ts'
+import { createSecretClient, readServerEnv } from '../_lib/env.js'
 import {
   CRON_SECRET_HEADER,
   hasValidCronSecret,
   readCronSecret,
-} from '../_lib/cronAuth.ts'
-import { errorType, logServerFailure } from '../_lib/observability.ts'
+} from '../_lib/cronAuth.js'
+import { errorType, logServerFailure } from '../_lib/observability.js'
 
 function readHeader(
   request: VercelRequest,

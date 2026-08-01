@@ -1,7 +1,7 @@
-import type { ExtractTransactionDraft } from '../../../src/types/api.ts'
-import type { AiProvider } from '../../../src/types/api.ts'
-import { extractWithMiniMax } from './miniMaxExtract.ts'
-import { extractWithOpenRouter } from './openRouterExtract.ts'
+import type { ExtractTransactionDraft } from '../../../src/types/api.js'
+import type { AiProvider } from '../../../src/types/api.js'
+import { extractWithMiniMax } from './miniMaxExtract.js'
+import { extractWithOpenRouter } from './openRouterExtract.js'
 
 export async function extractTransactionDraft(
   provider: AiProvider,

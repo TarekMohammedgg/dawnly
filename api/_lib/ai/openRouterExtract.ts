@@ -1,16 +1,16 @@
-import type { ExtractTransactionDraft } from '../../../src/types/api.ts'
+import type { ExtractTransactionDraft } from '../../../src/types/api.js'
 import {
   AI_EXTRACT_MAX_TOKENS,
   AI_EXTRACT_TEMPERATURE,
   AI_EXTRACT_TIMEOUT_MS,
   OPENROUTER_CHAT_URL,
   OPENROUTER_MODEL,
-} from './aiConfig.ts'
+} from './aiConfig.js'
 import {
   EXTRACTION_SYSTEM_PROMPT,
   buildExtractionUserPrompt,
-} from './extractionPrompt.ts'
-import { parseExtractionContent } from './parseExtraction.ts'
+} from './extractionPrompt.js'
+import { parseExtractionContent } from './parseExtraction.js'
 
 type OpenRouterChoice = {
   message?: { content?: string | null }

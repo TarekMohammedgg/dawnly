@@ -1,14 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { aiKeyUpdateRequestSchema } from '../../src/types/api.ts'
-import { readServerEnv } from '../_lib/env.ts'
-import { apiError } from '../_lib/http.ts'
-import { errorType, logServerFailure } from '../_lib/observability.ts'
+import { aiKeyUpdateRequestSchema } from '../../src/types/api.js'
+import { readServerEnv } from '../_lib/env.js'
+import { apiError } from '../_lib/http.js'
+import { errorType, logServerFailure } from '../_lib/observability.js'
 import {
   readAiKeyStatus,
   setAiProvider,
   upsertAiKeyInVault,
-} from '../_lib/openRouterSecret.ts'
-import { requireDawnlySession } from '../_lib/requireSession.ts'
+} from '../_lib/openRouterSecret.js'
+import { requireDawnlySession } from '../_lib/requireSession.js'
 
 export default async function handler(
   request: VercelRequest,

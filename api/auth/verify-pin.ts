@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { createSecretClient, readServerEnv } from '../_lib/env.ts'
-import { createSupabasePinAttemptStore } from '../_lib/pinAttemptStore.ts'
-import { errorType, logServerFailure } from '../_lib/observability.ts'
-import { handleVerifyPin } from '../_lib/verifyPin.ts'
+import { createSecretClient, readServerEnv } from '../_lib/env.js'
+import { createSupabasePinAttemptStore } from '../_lib/pinAttemptStore.js'
+import { errorType, logServerFailure } from '../_lib/observability.js'
+import { handleVerifyPin } from '../_lib/verifyPin.js'
 
 export default async function handler(
   request: VercelRequest,

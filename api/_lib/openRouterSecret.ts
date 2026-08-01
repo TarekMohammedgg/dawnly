@@ -4,7 +4,7 @@ import {
   aiProviderSchema,
   type AiKeyStatus,
   type AiProvider,
-} from '../../src/types/api.ts'
+} from '../../src/types/api.js'
 
 export const OPENROUTER_VAULT_SECRET_NAME = 'OPENROUTER_API_KEY'
 export const MINIMAX_VAULT_SECRET_NAME = 'MINIMAX_API_KEY'

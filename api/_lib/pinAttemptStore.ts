@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { PinAttemptState } from './pinLockout.ts'
+import type { PinAttemptState } from './pinLockout.js'
 
 export type PinAttemptStore = {
   read(): Promise<PinAttemptState>

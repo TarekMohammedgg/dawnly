@@ -3,15 +3,15 @@ import { z } from 'zod'
 import {
   transactionDeleteSchema,
   transactionUpdateSchema,
-} from '../../src/types/api.ts'
-import { readServerEnv } from '../_lib/env.ts'
-import { apiError } from '../_lib/http.ts'
-import { errorType, logServerFailure } from '../_lib/observability.ts'
-import { requireDawnlySession } from '../_lib/requireSession.ts'
+} from '../../src/types/api.js'
+import { readServerEnv } from '../_lib/env.js'
+import { apiError } from '../_lib/http.js'
+import { errorType, logServerFailure } from '../_lib/observability.js'
+import { requireDawnlySession } from '../_lib/requireSession.js'
 import {
   deleteTransaction,
   updateTransaction,
-} from '../_lib/transactions.ts'
+} from '../_lib/transactions.js'
 
 const idSchema = z.string().uuid()
 

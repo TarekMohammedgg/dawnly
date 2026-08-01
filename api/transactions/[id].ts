@@ -1,1 +1,1 @@
-export { default } from './transaction-id'
+export { default } from './transaction-id.js'

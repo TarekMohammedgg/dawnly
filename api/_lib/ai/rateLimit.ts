@@ -1,7 +1,7 @@
 import {
   AI_EXTRACT_RATE_LIMIT,
   AI_EXTRACT_RATE_WINDOW_MS,
-} from './aiConfig.ts'
+} from './aiConfig.js'
 
 type RateBucket = {
   count: number

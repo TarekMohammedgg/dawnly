@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { verifySessionToken } from './sessionToken.ts'
-import { apiError, readBearerToken } from './http.ts'
-import { createSecretClient, type ServerEnv } from './env.ts'
+import { verifySessionToken } from './sessionToken.js'
+import { apiError, readBearerToken } from './http.js'
+import { createSecretClient, type ServerEnv } from './env.js'
 
 export type AuthenticatedRequest = {
   supabase: SupabaseClient

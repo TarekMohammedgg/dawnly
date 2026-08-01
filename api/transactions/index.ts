@@ -2,12 +2,12 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import {
   transactionCreateSchema,
   transactionListQuerySchema,
-} from '../../src/types/api.ts'
-import { readServerEnv } from '../_lib/env.ts'
-import { apiError } from '../_lib/http.ts'
-import { errorType, logServerFailure } from '../_lib/observability.ts'
-import { requireDawnlySession } from '../_lib/requireSession.ts'
-import { createTransaction, listTransactions } from '../_lib/transactions.ts'
+} from '../../src/types/api.js'
+import { readServerEnv } from '../_lib/env.js'
+import { apiError } from '../_lib/http.js'
+import { errorType, logServerFailure } from '../_lib/observability.js'
+import { requireDawnlySession } from '../_lib/requireSession.js'
+import { createTransaction, listTransactions } from '../_lib/transactions.js'
 
 function readQueryParams(
   query: VercelRequest['query'],

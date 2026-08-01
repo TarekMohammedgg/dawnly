@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { z } from 'zod'
-import { apiTransactionSchema, type ApiTransaction } from '../../src/types/api.ts'
+import { apiTransactionSchema, type ApiTransaction } from '../../src/types/api.js'
 
 const mutationReceiptSchema = z.object({
   client_mutation_id: z.string().uuid(),

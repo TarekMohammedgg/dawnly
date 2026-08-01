@@ -5,12 +5,12 @@ import {
   type TransactionCreateInput,
   type TransactionListQuery,
   type TransactionUpdateInput,
-} from '../../src/types/api.ts'
-import { normalizeNotes } from '../../src/types/transaction.ts'
+} from '../../src/types/api.js'
+import { normalizeNotes } from '../../src/types/transaction.js'
 import {
   readMutationReceipt,
   storeMutationReceipt,
-} from './mutationReceipts.ts'
+} from './mutationReceipts.js'
 
 const SELECT_COLUMNS =
   'id, name, direction, amount, notes, transaction_date, currency, created_at, updated_at'
