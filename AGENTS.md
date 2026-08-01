@@ -82,8 +82,3 @@ dependency upgrade, update this table and `docs/PRD.md`, then run all guards.
 15. Release readiness requires `npm run lint`, `npm test`, `npm run
     release:check`, `git diff --check`, and completion of the Preview,
     Production, desktop, and Android checks in `docs/release-checklist.md`.
-16. Keep the Dawnly visual system consistent across the shell, lock screen,
-    dashboard, and PWA assets: deep teal is the primary brand color, warm
-    terracotta marks high-intent capture actions, and the ledger mark is the
-    shared product identifier. Preserve Arabic RTL, calm density, and no
-    gradients.

@@ -1,11 +1,8 @@
-import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
-import Box from '@mui/material/Box'
-import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useState } from 'react'
@@ -96,22 +93,10 @@ export function DashboardPage() {
   }
 
   return (
-    <Stack spacing={{ xs: 2.5, sm: 3 }}>
-      <Stack spacing={0.75}>
-        <Typography
-          variant="overline"
-          component="h2"
-          sx={{ color: 'primary.main', fontWeight: 800, letterSpacing: '0.08em' }}
-        >
-          الرئيسية
-        </Typography>
-        <Typography variant="h4" component="p">
-          حساباتك واضحة وهادية.
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          سجّل اللي ليك واللي عليك بالطريقة اللي تريحك.
-        </Typography>
-      </Stack>
+    <Stack spacing={3}>
+      <Typography variant="h5" component="h2" sx={{ fontWeight: 700 }}>
+        الرئيسية
+      </Typography>
 
       {loading ? <LoadingState label="جاري تحميل الرئيسية…" /> : null}
 
@@ -131,6 +116,17 @@ export function DashboardPage() {
             payableTotal={totals.payable}
           />
 
+          <Button
+            variant="contained"
+            size="large"
+            onClick={() => {
+              setFormOpen(true)
+            }}
+            sx={{ fontWeight: 700, minHeight: 48, alignSelf: 'stretch' }}
+          >
+            إضافة معاملة
+          </Button>
+
           <HoldToRecordButton
             disabled={extracting}
             onTranscript={(result) => {
@@ -142,40 +138,15 @@ export function DashboardPage() {
             onError={setVoiceError}
           />
 
-          <Button
-            variant="outlined"
-            color="primary"
-            size="large"
-            startIcon={<AddRoundedIcon />}
-            onClick={() => {
-              setFormOpen(true)
-            }}
-            sx={{ minHeight: 52, alignSelf: 'stretch' }}
-          >
-            إضافة معاملة
-          </Button>
-
           {extracting ? (
             <Alert severity="info">جاري تحليل التسجيل…</Alert>
           ) : null}
           {voiceError ? <Alert severity="error">{voiceError}</Alert> : null}
 
-          <Paper
-            variant="outlined"
-            sx={{
-              overflow: 'hidden',
-              borderRadius: 4,
-              bgcolor: 'background.paper',
-            }}
-          >
-            <Box sx={{ px: 2, pt: 2, pb: 1 }}>
-              <Typography variant="h6" component="h3">
-                أحدث المعاملات
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                آخر ما تم تسجيله
-              </Typography>
-            </Box>
+          <Stack spacing={1.5}>
+            <Typography variant="h6" component="h3" sx={{ fontWeight: 700 }}>
+              أحدث المعاملات
+            </Typography>
             <TransactionList
               transactions={recent}
               emptyTitle="لا توجد معاملات بعد"
@@ -184,7 +155,7 @@ export function DashboardPage() {
                 navigate(personPath(name))
               }}
             />
-          </Paper>
+          </Stack>
 
           <Dialog
             open={formOpen}

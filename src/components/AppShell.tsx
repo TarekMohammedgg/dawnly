@@ -11,7 +11,6 @@ import Paper from '@mui/material/Paper'
 import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 import type { ReactNode } from 'react'
-import { BrandMark } from './BrandMark'
 import { SyncStatusIndicator } from '../features/sync/SyncStatusIndicator'
 import { useAppRouter } from '../lib/routing/routerContext'
 import { NAV_ITEMS } from '../lib/routing/routes'
@@ -40,35 +39,15 @@ export function AppShell({ children }: AppShellProps) {
         bgcolor: 'background.default',
       }}
     >
-      <AppBar
-        position="sticky"
-        color="inherit"
-        elevation={0}
-        sx={{
-          bgcolor: 'background.paper',
-          color: 'text.primary',
-          borderBottom: 1,
-          borderColor: 'divider',
-        }}
-      >
-        <Toolbar
-          sx={{
-            width: '100%',
-            maxWidth: 600,
-            minHeight: { xs: 72, sm: 80 },
-            mx: 'auto',
-            py: 1.25,
-          }}
-        >
-          <BrandMark />
-          <Box sx={{ mr: 1.25, minWidth: 0 }}>
-            <Typography variant="h6" component="h1" sx={{ lineHeight: 1.1 }}>
-              Dawnly
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              دفتر ليّا وعليّا
-            </Typography>
-          </Box>
+      <AppBar position="sticky" color="default" elevation={0}>
+        <Toolbar>
+          <Typography
+            variant="h6"
+            component="h1"
+            sx={{ flexGrow: 1, fontWeight: 700 }}
+          >
+            Dawnly
+          </Typography>
         </Toolbar>
       </AppBar>
 
@@ -77,8 +56,8 @@ export function AppShell({ children }: AppShellProps) {
         maxWidth="sm"
         sx={{
           flex: 1,
-          pt: { xs: 2.5, sm: 3 },
-          pb: 12,
+          py: 2,
+          pb: 10,
           width: '100%',
         }}
       >
@@ -97,9 +76,6 @@ export function AppShell({ children }: AppShellProps) {
           right: 0,
           zIndex: (theme) => theme.zIndex.appBar,
           borderRadius: 0,
-          borderTop: 1,
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
         }}
       >
         <BottomNavigation
@@ -111,7 +87,7 @@ export function AppShell({ children }: AppShellProps) {
               navigate(item.path)
             }
           }}
-          sx={{ height: { xs: 70, sm: 74 }, maxWidth: 600, mx: 'auto' }}
+          sx={{ height: 64 }}
         >
           {NAV_ITEMS.map((item) => (
             <BottomNavigationAction
