@@ -1,0 +1,45 @@
+{
+  "$schema": "https://unpkg.com/wrangler@4/config-schema.json",
+  "name": "dawnly-health-cron",
+  "main": "ops/cloudflare-cron/src/index.ts",
+  "compatibility_date": "2026-08-01",
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "triggers": {
+    "crons": ["0 3 * * *"]
+  },
+  "vars": {
+    "DAWNLY_PUBLIC_URL": "https://replace-with-dawnly-domain.example"
+  },
+  "secrets": {
+    "required": ["DAWNLY_CRON_SECRET"]
+  },
+  "env": {
+    "preview": {
+      "name": "dawnly-health-cron-preview",
+      "triggers": {
+        "crons": ["0 3 * * *"]
+      },
+      "vars": {
+        "DAWNLY_PUBLIC_URL": "https://replace-with-dawnly-preview-domain.example"
+      },
+      "secrets": {
+        "required": ["DAWNLY_CRON_SECRET"]
+      }
+    },
+    "production": {
+      "name": "dawnly-health-cron-production",
+      "triggers": {
+        "crons": ["0 3 * * *"]
+      },
+      "vars": {
+        "DAWNLY_PUBLIC_URL": "https://replace-with-dawnly-domain.example"
+      },
+      "secrets": {
+        "required": ["DAWNLY_CRON_SECRET"]
+      }
+    }
+  }
+}
